@@ -1,0 +1,7 @@
+Release Notes
+
+v0.0.1 08.05.2020
+- Initial version
+- Define IO Pin vars
+- Define global Vars
+- Setup status and blink function
