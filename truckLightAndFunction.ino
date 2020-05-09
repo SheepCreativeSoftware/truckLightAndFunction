@@ -1,5 +1,5 @@
 /************************************ 
- * truckLightAndFunction v0.0.2
+ * truckLightAndFunction v0.0.3
  * Date: 09.05.2020 | 20-11
  * <Truck Light and function module>
  * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
@@ -21,18 +21,18 @@
  ************************************/
 #define ContryOption EU                   //Setup Region EU or US for Truck
 #define HeadLightCombine false            //High => Low and High Beam on both Head Light output Pins | False => Seperate Pins for High and Low Beam 
-#define WireCom false                     //Activate Communication to other modules via I2C 
-#if (WireCom == true)
-#define TruckAdress 1                     //I2C Adress for this Module: Truck
-#define BeaconAdress 2                    //I2C Adress for Module: Beacon Lights Extension
-#define TrailerAdress 3                   //I2C Adress for Module: Trailer 
-#define ExtFunctionAdress 4               //I2C Adress for Module: Special function for example Servos Steering
+#define wireCom true                     //Activate Communication to other modules via I2C 
+#if (wireCom == true)
+	#define truckAdress 1                     //I2C Adress for this Module: Truck
+	#define beaconAdress 2                    //I2C Adress for Module: Beacon Lights Extension
+	#define trailerAdress 3                   //I2C Adress for Module: Trailer 
+	#define extFunctionAdress 4               //I2C Adress for Module: Special function for example Servos Steering
 #endif
-                        
+#define debugLevel 1	
 /************************************
  * Include Files
  ************************************/
-#if (WireCom == true)
+#if (wireCom == true)
 #include <Wire.h>                         //Include I2C Library
 #endif
 
@@ -52,7 +52,9 @@
 #define inReverseSignal 7                 //Reverse Signal from Servonaut Speed Controller
 
 //Outputs
-#define outStatusLed 13                   //Arduino status LED output Pin
+#if (debugLevel >=1)
+	#define outStatusLed 13					//Arduino status LED output Pin
+#endif
 #define outParkingLight 8                 //Parking light output pin
 #define outLowBeamLight 9                 //Head light low beam output pin | PWM
 #define outHighBeamLight 10               //Head light high beam output pin
@@ -80,51 +82,58 @@ int blink(unsigned int);
 
 void setup() {
   // put your setup code here, to run once:
-  #if (WireCom == true)
-  Wire.begin(TruckAdress);                 // join I2C bus (address optional for master)
+  #if (wireCom == true)
+  Wire.begin(truckAdress);                 // join I2C bus (address optional for master)
   #endif
 // TODO: Setup IO pins
 }
-
+bool pulseTest = false;
 void loop() {                             // put your main code here, to run repeatedly:
-  bool errorFlag = false;                 // local var for error status
-  
-  
-  // Example For later Communication with other Module
-  // TODO: Setup Communication
-  #if (WireCom == true)
-  Wire.beginTransmission(8);             // transmit to device #8
-  Wire.write("Need to Setup COM");       // sends five bytes
-  Wire.endTransmission();                // stop transmitting
-  #endif
-  
-  controllerStatus(errorFlag);
-}
+	#if (debugLevel >=1)
+		bool errorFlag = false;                 	// local var for error status
+	#endif
 
+
+	// Example For later Communication with other Module
+	// TODO: Setup Communication
+	pulseTest = !pulseTest;
+	delay(5000);
+	#if (wireCom == true)
+		#ifdef beaconAdress
+			Wire.beginTransmission(beaconAdress); 		// transmit to Beacon Module
+			Wire.write(pulseTest);       				// send bool
+			Wire.endTransmission();        				// stop transmitting
+		#endif
+	#endif
+	#if (debugLevel >=1)
+		controllerStatus(errorFlag);
+	#endif
+}
+#if (debugLevel >=1)
 bool controllerStatus(bool errorFlag) {
-  if(errorFlag) {
-    return true;
-  } else {
-    unsigned long currentMillis = millis();
+	if(errorFlag) {
+		return true;
+	} else {
+		unsigned long currentMillis = millis();
     if (currentMillis - StatusPreviousMillis >= 1000) { //Zeitverzoegerte Abfrage
-      StatusPreviousMillis = currentMillis;
-      pulseStatus = !pulseStatus;
+		StatusPreviousMillis = currentMillis;
+		pulseStatus = !pulseStatus;
     } else if (currentMillis < StatusPreviousMillis) {  //Reset
-      StatusPreviousMillis = currentMillis; 
+		StatusPreviousMillis = currentMillis; 
     }
     return pulseStatus;                 //Flash if everything is OK
-  }
+	}
 }
-
+#endif
 int blink(unsigned int blinkTimeMillis) {
-  if((blinkOnTime == 0) || (blinkOnTime > millis())){ //Reset blinkOnTime on startup and on overflow.
-    blinkOnTime = millis();
-  }
-  unsigned long blinkTime = millis() - blinkOnTime;
-  if(blinkTime%blinkTimeMillis >= blinkTimeMillis/2){ //ON/OFF Interval at half of Time.
-    return 0;
-  } else {
-    return 1;
-  }
+	if((blinkOnTime == 0) || (blinkOnTime > millis())){ //Reset blinkOnTime on startup and on overflow.
+		blinkOnTime = millis();
+	}
+		unsigned long blinkTime = millis() - blinkOnTime;
+	if(blinkTime%blinkTimeMillis >= blinkTimeMillis/2){ //ON/OFF Interval at half of Time.
+		return 0;
+	} else {
+		return 1;
+	}
 
 }
