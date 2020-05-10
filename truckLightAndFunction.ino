@@ -1,6 +1,6 @@
 /************************************ 
- * truckLightAndFunction v0.0.4
- * Date: 10.05.2020 | 15-00
+ * truckLightAndFunction v0.0.5
+ * Date: 10.05.2020 | 17:09
  * <Truck Light and function module>
  * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
@@ -76,11 +76,13 @@ unsigned long StatusPreviousMillis = 0;
 unsigned long blinkOnTime = 0;
 unsigned long waitForAnswer = 0;
 bool sendDirection = false;
-unsigned int reciveTimeout = 1000;
+unsigned int reciveTimeout = 10000;
+unsigned int waitAfterSend = 100;
 //Functions
 bool controllerStatus(bool);
 int blink(unsigned int);
-unsigned int wireComunication(int, unsigned int, unsigned int);
+unsigned int wireComunicationSend(int, unsigned int, unsigned int);
+unsigned int wireComunicationRecive(unsigned int);
 unsigned int checkCRC(unsigned int, unsigned int, unsigned int);
 
 
@@ -92,9 +94,12 @@ void setup() {
 	#if (debugLevel >=2)
 	Serial.begin(9600);  // start serial for output
 	#endif
+	delay(5000);
 // TODO: Setup IO pins
 }
-bool pulseTest = false;
+unsigned int pulseTest = false;
+unsigned int lastPulseTest = false;
+unsigned int sendSucess = 0x99;
 void loop() {                             // put your main code here, to run repeatedly:
 	#if (debugLevel >=1)
 		bool errorFlag = false;                 	// local var for error status
@@ -103,20 +108,15 @@ void loop() {                             // put your main code here, to run rep
 
 	// Example For later Communication with other Module
 	// TODO: Setup Communication
-	// pulseTest = !pulseTest;
+	pulseTest = blink(10000);
 	// delay(5000);
-	// #if (wireCom == true)
-		// #ifdef beaconAdress
-			// Wire.beginTransmission(beaconAdress); 		// transmit to Beacon Module
-			// Wire.write(pulseTest);       				// send bool
-			// Wire.endTransmission();        				// stop transmitting
-		// #endif
 	#if (wireCom == true)
-		unsigned int tempStatus = wireComunication(beaconAdress, 0x01, 0x01);
-	#if (debugLevel >=3)
-		Serial.println("Com Status:");      				// print the character
-		Serial.println(tempStatus);         				// com Status 
-	#endif
+	
+	if(pulseTest != lastPulseTest) {
+		sendSucess = wireComunicationSend(beaconAdress, 0x01, pulseTest);
+		lastPulseTest = pulseTest;
+	}
+	wireComunicationRecive(beaconAdress);
 	#endif
 	#if (debugLevel >=1)
 		controllerStatus(errorFlag);
@@ -152,48 +152,99 @@ int blink(unsigned int blinkTimeMillis) {
 }
 
 #if (wireCom == true)
-unsigned int wireComunication(int sendAdress, unsigned int RegisterAdress, unsigned int data) {
-	unsigned int sendError = 0;
+unsigned int wireComunicationSend(int sendAdress, unsigned int RegisterAdress, unsigned int data) {
+	unsigned int sendError = 0xFF;
 	if(sendDirection == false) {
 		unsigned int dataCRC = checkCRC(RegisterAdress, data);
 		Wire.beginTransmission(sendAdress); 		// transmit to Beacon Module
 		Wire.write(RegisterAdress);       			// send bytes
 		Wire.write(data);       					// send bytes
 		Wire.write(dataCRC);       					// send bytes
-		sendError = Wire.endTransmission();        	// stop transmitting
-		#if (debugLevel >=3)
-		Serial.println("Send Error Code:");         // print the character
-		Serial.println(sendError);         			// print the character
-		#endif
-		if(sendError == 0) {
+		sendError = Wire.endTransmission();        	// stop transmitting | 0:success; 1:data too long to fit in transmit buffer;
+													// 2:received NACK on transmit of address; 3:received NACK on transmit of data;
+													// 4:other error
+		waitForAnswer = millis();
+	} 
+
+	#if (debugLevel >=3)
+		//Serial.println("Wire Com Status Message:");         // Sending Error Debug Message
+		switch (sendError) {
+			case 0x00:
+				Serial.println("0x00:send success");         		// Send Status Message
+			break;
+			case 0x01:
+				Serial.println("0x01:data too long to fit in transmit buffer");	// Send Status Message
+			break;
+			case 0x02:
+				Serial.println("0x02:received NACK on transmit of address");	// Send Status Message
+			break;
+			case 0x03:
+				Serial.println("0x03:received NACK on transmit of data");		// Send Status Message
+			break;
+			case 0x04:
+				Serial.println("0x04:other transmit error");	// Send Status Message
+			break;
+			case 0xFF:
+			//Do Nothing
+			break;
+			default:
+				Serial.println("0x99:Error code not defined:");	    // Send Status Message
+				Serial.println(sendError);	    // Send Status Message
+			break;
+		}	
+	#endif
+	return sendError;
+}
+
+unsigned int wireComunicationRecive(unsigned int sendAdress) {
+	unsigned int sendError = 0xFF;
+	if(sendDirection == true) {
+		while(Wire.available()) { 					// slave may send less than requested
+			sendError = Wire.read(); 				// receive a byte as character
+			sendDirection = false;
+				
+		}
+		if((millis() >= waitForAnswer+reciveTimeout) && (sendDirection == true)) {
+			sendDirection = false;
+			sendError = 0x06;
+			
+		}
+	}	
+	if((millis() >= waitForAnswer+waitAfterSend) && (sendDirection == false) && (sendSucess == 0x00)) {
 			Wire.requestFrom(sendAdress, 1);    // request 6 bytes from slave device #8
 			sendDirection = true;
 			waitForAnswer = millis();
-		}
-	} else {
-		while (Wire.available()) { 					// slave may send less than requested
-			unsigned int tempData = Wire.read(); 	// receive a byte as character
-			#if (debugLevel >=3)
-			Serial.println("Recived Answer:");      // print the character
-			Serial.println(tempData);         		// print the character
-			#endif
-			sendDirection = false;
-			if(tempData == 0x01) {
-				sendError = 0;
-			} else {
-				sendError = tempData;
-			}
-		}
-		if(millis() >= (waitForAnswer+reciveTimeout)) {
-			sendDirection = false;
-			sendError = 0x99;
-			#if (debugLevel >=3)
-			Serial.println("Answer Timeout");      // print the character
-			#endif
-		}
-		
+			sendError = 0x05;
+			sendSucess = 0x99;
 	}
 	
+	#if (debugLevel >=3)
+		//Serial.println("Wire Com Status Message:");         // Sending Error Debug Message
+		switch (sendError) {
+			case 0x05:
+				Serial.println("0x05:request transmited");		// Send Status Message
+			break;
+			case 0x06:
+				Serial.println("0x06:answer timed out");		// Send Status Message
+			break;
+			case 0x10:
+				Serial.println("0x10:answer transmit successfull");		// Send Status Message
+			break;
+			case 0x11:
+				Serial.println("0x11:answer CRC Check failed");		// Send Status Message
+			break;
+			case 0x12:
+				Serial.println("0x12:answer to much information");	// Send Status Message
+			break;
+			case 0xFF:
+				//Do Nothing
+			break;
+			default:
+				Serial.println("0x99:Error code not defined:");	    // Send Status Message
+				Serial.println(sendError);	    // Send Status Message
+			break;
+		}	
+	#endif
 	return sendError;
 }
 	
