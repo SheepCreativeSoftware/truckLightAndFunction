@@ -1,6 +1,6 @@
 /************************************ 
- * truckLightAndFunction v0.0.3
- * Date: 09.05.2020 | 20-11
+ * truckLightAndFunction v0.0.4
+ * Date: 10.05.2020 | 15-00
  * <Truck Light and function module>
  * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
@@ -28,7 +28,7 @@
 	#define trailerAdress 3                   //I2C Adress for Module: Trailer 
 	#define extFunctionAdress 4               //I2C Adress for Module: Special function for example Servos Steering
 #endif
-#define debugLevel 1	
+#define debugLevel 3	
 /************************************
  * Include Files
  ************************************/
@@ -74,17 +74,24 @@
 bool pulseStatus = false;
 unsigned long StatusPreviousMillis = 0;
 unsigned long blinkOnTime = 0;
-
+unsigned long waitForAnswer = 0;
+bool sendDirection = false;
+unsigned int reciveTimeout = 1000;
 //Functions
 bool controllerStatus(bool);
 int blink(unsigned int);
+unsigned int wireComunication(int, unsigned int, unsigned int);
+unsigned int checkCRC(unsigned int, unsigned int, unsigned int);
 
 
 void setup() {
-  // put your setup code here, to run once:
-  #if (wireCom == true)
-  Wire.begin(truckAdress);                 // join I2C bus (address optional for master)
-  #endif
+	// put your setup code here, to run once:
+	#if (wireCom == true)
+	Wire.begin(truckAdress);                 // join I2C bus (address optional for master)
+	#endif
+	#if (debugLevel >=2)
+	Serial.begin(9600);  // start serial for output
+	#endif
 // TODO: Setup IO pins
 }
 bool pulseTest = false;
@@ -96,14 +103,20 @@ void loop() {                             // put your main code here, to run rep
 
 	// Example For later Communication with other Module
 	// TODO: Setup Communication
-	pulseTest = !pulseTest;
-	delay(5000);
+	// pulseTest = !pulseTest;
+	// delay(5000);
+	// #if (wireCom == true)
+		// #ifdef beaconAdress
+			// Wire.beginTransmission(beaconAdress); 		// transmit to Beacon Module
+			// Wire.write(pulseTest);       				// send bool
+			// Wire.endTransmission();        				// stop transmitting
+		// #endif
 	#if (wireCom == true)
-		#ifdef beaconAdress
-			Wire.beginTransmission(beaconAdress); 		// transmit to Beacon Module
-			Wire.write(pulseTest);       				// send bool
-			Wire.endTransmission();        				// stop transmitting
-		#endif
+		unsigned int tempStatus = wireComunication(beaconAdress, 0x01, 0x01);
+	#if (debugLevel >=3)
+		Serial.println("Com Status:");      				// print the character
+		Serial.println(tempStatus);         				// com Status 
+	#endif
 	#endif
 	#if (debugLevel >=1)
 		controllerStatus(errorFlag);
@@ -137,3 +150,54 @@ int blink(unsigned int blinkTimeMillis) {
 	}
 
 }
+
+#if (wireCom == true)
+unsigned int wireComunication(int sendAdress, unsigned int RegisterAdress, unsigned int data) {
+	unsigned int sendError = 0;
+	if(sendDirection == false) {
+		unsigned int dataCRC = checkCRC(RegisterAdress, data);
+		Wire.beginTransmission(sendAdress); 		// transmit to Beacon Module
+		Wire.write(RegisterAdress);       			// send bytes
+		Wire.write(data);       					// send bytes
+		Wire.write(dataCRC);       					// send bytes
+		sendError = Wire.endTransmission();        	// stop transmitting
+		#if (debugLevel >=3)
+		Serial.println("Send Error Code:");         // print the character
+		Serial.println(sendError);         			// print the character
+		#endif
+		if(sendError == 0) {
+			Wire.requestFrom(sendAdress, 1);    // request 6 bytes from slave device #8
+			sendDirection = true;
+			waitForAnswer = millis();
+		}
+	} else {
+		while (Wire.available()) { 					// slave may send less than requested
+			unsigned int tempData = Wire.read(); 	// receive a byte as character
+			#if (debugLevel >=3)
+			Serial.println("Recived Answer:");      // print the character
+			Serial.println(tempData);         		// print the character
+			#endif
+			sendDirection = false;
+			if(tempData == 0x01) {
+				sendError = 0;
+			} else {
+				sendError = tempData;
+			}
+		}
+		if(millis() >= (waitForAnswer+reciveTimeout)) {
+			sendDirection = false;
+			sendError = 0x99;
+			#if (debugLevel >=3)
+			Serial.println("Answer Timeout");      // print the character
+			#endif
+		}
+		
+	}
+	
+	return sendError;
+}
+	
+unsigned int checkCRC(unsigned int registerAdress, unsigned int data){
+	return 1;
+}
+#endif
