@@ -1,5 +1,10 @@
 Release Notes
 
+v0.0.4 10.05.2020
+- added communication Block
+- check if sending data is working
+  else do error handling
+  
 v0.0.3 09.05.2020
 - added Test I2C Communication to beacon module; Turn on and off light every 5 seconds
 - restructur program
