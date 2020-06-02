@@ -1,5 +1,10 @@
 Release Notes
 
+v0.0.4
+- setup pinmode for I/Os
+- reconfigure I/O pins
+- create 3 interrupt service routines
+
 v0.0.3 09.05.2020
 - added Test I2C Communication to beacon module; Turn on and off light every 5 seconds
 - restructur program
