@@ -76,23 +76,24 @@ bool pulseStatus = false;
 unsigned long StatusPreviousMillis = 0;
 unsigned long blinkOnTime = 0;
 
-volatile int int1Value[16] = {0};
-volatile int int1Index = 0;
-volatile int int1ArraySize = 8;
-volatile long int1LastChange = 0;
-volatile int int2Value[16] = {0};
-volatile int int2Index = 0;
-volatile int int2ArraySize = 8;
-volatile long int2LastChange = 0;
-volatile int int3Value = 0;
-volatile long int3LastChange = 0;
+//Vars for Interrupt
+volatile int int1Value[16] = {0};		//saves time difference of every channel
+volatile int int1Index = 0;				//actual index for interrupt
+volatile int int1ArraySize = 8;			//maximum channels from this PPM signal
+volatile long int1LastChange = 0;		//time since last interrupt
+volatile int int2Value[16] = {0};		//saves time difference of every channel
+volatile int int2Index = 0;				//actual index for interrupt
+volatile int int2ArraySize = 8;			//maximum channels from this PPM signal
+volatile long int2LastChange = 0;		//time since last interrupt
+volatile int int3Value = 0;				//saves time difference of this channel
+volatile long int3LastChange = 0;		//time since last interrupt
 
 //Functions
-bool controllerStatus(bool);
-int blink(unsigned int);
-void ppmMultiInterrupt1();
-void ppmMultiInterrupt2();
-void ppmServoInterrupt();
+bool controllerStatus(bool);			//function to signal errorstate
+int blink(unsigned int);				//function for blink mechanism
+void ppmMultiInterrupt1();				//function for interrupt of first PPM signal
+void ppmMultiInterrupt2();				//function for interrupt of second PPM signal
+void ppmServoInterrupt();				//function for interrupt of servo PPM signal
 
 //Classes
 
@@ -122,9 +123,9 @@ void setup() {
 	pinMode(outBrakeLight, OUTPUT);
 	pinMode(outAuxLight, OUTPUT);
 	
-	attachInterrupt(digitalPinToInterrupt(inFunction1ControlPPM), ppmMultiInterrupt1, CHANGE);
-	attachInterrupt(digitalPinToInterrupt(inFunction2ControlPPM), ppmMultiInterrupt2, CHANGE);
-	attachInterrupt(digitalPinToInterrupt(inSteerControlPPM), ppmServoInterrupt, CHANGE);
+	attachInterrupt(digitalPinToInterrupt(inFunction1ControlPPM), ppmMultiInterrupt1, CHANGE); 	//Setup Interrupt
+	attachInterrupt(digitalPinToInterrupt(inFunction2ControlPPM), ppmMultiInterrupt2, CHANGE);	//Setup Interrupt
+	attachInterrupt(digitalPinToInterrupt(inSteerControlPPM), ppmServoInterrupt, CHANGE);		//Setup Interrupt
 	#if (debugLevel >=1)
 	pinMode(outStatusLed, OUTPUT);
 	#endif
@@ -151,8 +152,8 @@ void loop() {                             // put your main code here, to run rep
 	// bool dynRightFlashLight = 0;
 	// bool dynAuxLight = 0;
 
-	digitalWrite(outBrakeLight, dynBrakeSignal);
-	digitalWrite(outReverseLight, dynReverseSignal);
+	digitalWrite(outBrakeLight, dynBrakeSignal);				//Copy var to Output
+	digitalWrite(outReverseLight, dynReverseSignal);			//Copy var to Output
 
 	
 
@@ -168,22 +169,22 @@ bool controllerStatus(bool errorFlag) {
 		return true;
 	} else {
 		unsigned long currentMillis = millis();
-    if (currentMillis - StatusPreviousMillis >= 1000) { //Zeitverzoegerte Abfrage
+    if (currentMillis - StatusPreviousMillis >= 1000) { 	//Zeitverzoegerte Abfrage
 		StatusPreviousMillis = currentMillis;
 		pulseStatus = !pulseStatus;
-    } else if (currentMillis < StatusPreviousMillis) {  //Reset
+    } else if (currentMillis < StatusPreviousMillis) {  	//Reset
 		StatusPreviousMillis = currentMillis; 
     }
-    return pulseStatus;                 //Flash if everything is OK
+    return pulseStatus;                 					//Flash if everything is OK
 	}
 }
 #endif
 int blink(unsigned int blinkTimeMillis) {
-	if((blinkOnTime == 0) || (blinkOnTime > millis())){ //Reset blinkOnTime on startup and on overflow.
+	if((blinkOnTime == 0) || (blinkOnTime > millis())){ 	//Reset blinkOnTime on startup and on overflow.
 		blinkOnTime = millis();
 	}
 		unsigned long blinkTime = millis() - blinkOnTime;
-	if(blinkTime%blinkTimeMillis >= blinkTimeMillis/2){ //ON/OFF Interval at half of Time.
+	if(blinkTime%blinkTimeMillis >= blinkTimeMillis/2){ 	//ON/OFF Interval at half of Time.
 		return 0;
 	} else {
 		return 1;
@@ -192,47 +193,47 @@ int blink(unsigned int blinkTimeMillis) {
 }
 
 void ppmMultiInterrupt1(){
-	volatile long nMicros = micros(); //Speichere aktuelle Zeit
-	volatile long nDifference = (nMicros - int1LastChange); //Errechne Zeit seit der letzten Flanke
-	if((nDifference > 700) && (nDifference < 2200)) { //HIGH Impuls herausfiltern | Wenn Zeit zwischen 700 und 2200 handelt es sich um einen HIGH Impuls
-	if((nDifference > 850) && (nDifference < 950)) { //Startimpuls von 915 herausfiltern
-		int1Index = 0; //Index index auf 0 setzen damit nächste Impulse ab value[0] geschrieben werden.
+	volatile long nMicros = micros(); 						//Save actual time
+	volatile long nDifference = (nMicros - int1LastChange); //Calc time since last Change
+	if((nDifference > 700) && (nDifference < 2200)) { 		//Filter HIGH Impulse | HIGH if time is between 700 and 2200 
+	if((nDifference > 850) && (nDifference < 950)) { 		//if time is ~915 then this is the start impulse
+		int1Index = 0; 										//then set index to 0
 		} else {
-			if (int1Index >= int1ArraySize) { // Sicherheit falls Variable index zu groß wird
+			if (int1Index >= int1ArraySize) { 				//if start impulse is missed set index to 0 to prevent the array from going out of bound
 				int1Index = 0;
 			}
-			int1Value[int1Index] = nDifference;// Schreibe Zeit auf Array
-			int1Index++; //Erhöhe Index um 1 für den nächsten Impuls
+			int1Value[int1Index] = nDifference;				//save actual time difference to value
+			int1Index++; 									//increment index by one
 		}
 	}
 
-	int1LastChange = nMicros;// Speichere aktuelle Zeit für den nächsten Interrupt
+	int1LastChange = nMicros;								//save time for next interrupt
 }
 
 void ppmMultiInterrupt2(){
-	volatile long nMicros = micros(); //Speichere aktuelle Zeit
-	volatile long nDifference = (nMicros - int2LastChange); //Errechne Zeit seit der letzten Flanke
-	if((nDifference > 700) && (nDifference < 2200)) { //HIGH Impuls herausfiltern | Wenn Zeit zwischen 700 und 2200 handelt es sich um einen HIGH Impuls
-	if((nDifference > 850) && (nDifference < 950)) { //Startimpuls von 915 herausfiltern
-		int2Index = 0; //Index index auf 0 setzen damit nächste Impulse ab value[0] geschrieben werden.
+	volatile long nMicros = micros(); 						//Save actual time
+	volatile long nDifference = (nMicros - int2LastChange); //Calc time since last Change
+	if((nDifference > 700) && (nDifference < 2200)) { 		//Filter HIGH Impulse | HIGH if time is between 700 and 2200 
+	if((nDifference > 850) && (nDifference < 950)) { 		//if time is ~915 then this is the start impulse
+		int2Index = 0; 										//then set index to 0
 		} else {
-			if (int2Index >= int2ArraySize) { // Sicherheit falls Variable index zu groß wird
+			if (int2Index >= int2ArraySize) { 				//if start impulse is missed set index to 0 to prevent the array from going out of bound
 				int2Index = 0;
 			}
-			int2Value[int2Index] = nDifference;// Schreibe Zeit auf Array
-			int2Index++; //Erhöhe Index um 1 für den nächsten Impuls
+			int2Value[int2Index] = nDifference;				//save actual time difference to value
+			int2Index++; 									//increment index by one
 		}
 	}
 
-	int2LastChange = nMicros;// Speichere aktuelle Zeit für den nächsten Interrupt
+	int2LastChange = nMicros;								//save time for next interrupt
 }
 
 void ppmServoInterrupt(){
-	volatile long nMicros = micros(); //Speichere aktuelle Zeit
-	volatile long nDifference = (nMicros - int3LastChange); //Errechne Zeit seit der letzten Flanke
-	if((nDifference > 700) && (nDifference < 2200)) { //HIGH Impuls herausfiltern | Wenn Zeit zwischen 700 und 2200 handelt es sich um einen HIGH Impuls
-		int3Value = nDifference;// Schreibe Zeit auf Array
+	volatile long nMicros = micros(); 						//Save actual time
+	volatile long nDifference = (nMicros - int3LastChange); //Calc time since last Change
+	if((nDifference > 700) && (nDifference < 2200)) { 		//Filter HIGH Impulse | HIGH if time is between 700 and 2200 
+		int3Value = nDifference;							//save actual time difference to value
 	}
 
-	int3LastChange = nMicros;// Speichere aktuelle Zeit für den nächsten Interrupt
+	int3LastChange = nMicros;								//save time for next interrupt
 }
