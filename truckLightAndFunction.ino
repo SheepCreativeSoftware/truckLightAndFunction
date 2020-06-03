@@ -1,6 +1,6 @@
 /************************************ 
- * truckLightAndFunction v0.0.5
- * Date: 02.06.2020 | 21:09
+ * truckLightAndFunction v0.0.6
+ * Date: 03.06.2020 | 22:16
  * <Truck Light and function module>
  * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
@@ -33,9 +33,10 @@
  * Include Files
  ************************************/
 #if (wireCom == true)
-#include <Wire.h>                         //Include I2C Library
+#include <Wire.h>                         		//Include I2C Library
 #endif
-
+#include <SoftPWM.h>							//https://github.com/bhagman/SoftPWM
+#include "truckFunctions.h"						//Special functions
 /************************************
  * Definition IO Pins
  ************************************/
@@ -95,10 +96,12 @@ void ppmMultiInterrupt1();				//function for interrupt of first PPM signal
 void ppmMultiInterrupt2();				//function for interrupt of second PPM signal
 void ppmServoInterrupt();				//function for interrupt of servo PPM signal
 
-//Classes
 
+//Classes
+outputDefine Output[10];
 
 void setup() {
+	SoftPWMBegin();
 	// put your setup code here, to run once:
 	/************************************
 	* Setup Inputs 
@@ -237,3 +240,7 @@ void ppmServoInterrupt(){
 
 	int3LastChange = nMicros;								//save time for next interrupt
 }
+
+
+
+

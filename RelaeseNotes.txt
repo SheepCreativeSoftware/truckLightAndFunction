@@ -1,9 +1,14 @@
 Release Notes
 
-v0.0.5
+v0.0.6 03.06.2020
+- new function for ppm evaluation
+- new function to set up outputs
+- new file for functions an classes
+
+v0.0.5 02.06.2020
 - added comments
 
-v0.0.4
+v0.0.4 02.06.2020
 - setup pinmode for I/Os
 - reconfigure I/O pins
 - create 3 interrupt service routines
