@@ -1,6 +1,6 @@
 /************************************ 
- * truckLightAndFunction v0.0.6
- * Date: 03.06.2020 | 22:16
+ * truckLightAndFunction v0.0.7
+ * Date: 07.06.2020 | 19:00
  * <Truck Light and function module>
  * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
@@ -78,16 +78,20 @@ unsigned long StatusPreviousMillis = 0;
 unsigned long blinkOnTime = 0;
 
 //Vars for Interrupt
-volatile int int1Value[16] = {0};		//saves time difference of every channel
+volatile int int1Value[8] = {0};		//saves time difference of every channel
 volatile int int1Index = 0;				//actual index for interrupt
-volatile int int1ArraySize = 8;			//maximum channels from this PPM signal
 volatile long int1LastChange = 0;		//time since last interrupt
-volatile int int2Value[16] = {0};		//saves time difference of every channel
+volatile int int2Value[8] = {0};		//saves time difference of every channel
 volatile int int2Index = 0;				//actual index for interrupt
-volatile int int2ArraySize = 8;			//maximum channels from this PPM signal
 volatile long int2LastChange = 0;		//time since last interrupt
 volatile int int3Value = 0;				//saves time difference of this channel
 volatile long int3LastChange = 0;		//time since last interrupt
+
+//Vars for debug
+#if (debugLevel >=1)
+	bool serialIsSent = false;
+#endif
+
 
 //Functions
 bool controllerStatus(bool);			//function to signal errorstate
@@ -95,6 +99,7 @@ int blink(unsigned int);				//function for blink mechanism
 void ppmMultiInterrupt1();				//function for interrupt of first PPM signal
 void ppmMultiInterrupt2();				//function for interrupt of second PPM signal
 void ppmServoInterrupt();				//function for interrupt of servo PPM signal
+void debugInterrupt();					//function to debug the interrupt data
 
 
 //Classes
@@ -157,13 +162,13 @@ void loop() {                             // put your main code here, to run rep
 
 	digitalWrite(outBrakeLight, dynBrakeSignal);				//Copy var to Output
 	digitalWrite(outReverseLight, dynReverseSignal);			//Copy var to Output
-
 	
-
-
 	
 	#if (debugLevel >=1)
 		controllerStatus(errorFlag);
+	#endif
+	#if (debugLevel >=3)
+	debugInterrupt();
 	#endif
 }
 #if (debugLevel >=1)
@@ -199,14 +204,13 @@ void ppmMultiInterrupt1(){
 	volatile long nMicros = micros(); 						//Save actual time
 	volatile long nDifference = (nMicros - int1LastChange); //Calc time since last Change
 	if((nDifference > 700) && (nDifference < 2200)) { 		//Filter HIGH Impulse | HIGH if time is between 700 and 2200 
-	if((nDifference > 850) && (nDifference < 950)) { 		//if time is ~915 then this is the start impulse
-		int1Index = 0; 										//then set index to 0
+		if((nDifference > 850) && (nDifference < 980)) { 	//if time is ~915 then this is the start impulse
+			int1Index = 0; 									//then set index to 0
 		} else {
-			if (int1Index >= int1ArraySize) { 				//if start impulse is missed set index to 0 to prevent the array from going out of bound
-				int1Index = 0;
+			if (int1Index < 8) {							//if index is out of bound, then wait for next start impulse
+				int1Value[int1Index] = nDifference;			//save actual time difference to value
+				int1Index++; 								//increment index by one
 			}
-			int1Value[int1Index] = nDifference;				//save actual time difference to value
-			int1Index++; 									//increment index by one
 		}
 	}
 
@@ -217,14 +221,13 @@ void ppmMultiInterrupt2(){
 	volatile long nMicros = micros(); 						//Save actual time
 	volatile long nDifference = (nMicros - int2LastChange); //Calc time since last Change
 	if((nDifference > 700) && (nDifference < 2200)) { 		//Filter HIGH Impulse | HIGH if time is between 700 and 2200 
-	if((nDifference > 850) && (nDifference < 950)) { 		//if time is ~915 then this is the start impulse
-		int2Index = 0; 										//then set index to 0
+		if((nDifference > 850) && (nDifference < 980)) { 	//if time is ~915 then this is the start impulse
+			int2Index = 0; 									//then set index to 0
 		} else {
-			if (int2Index >= int2ArraySize) { 				//if start impulse is missed set index to 0 to prevent the array from going out of bound
-				int2Index = 0;
+			if (int2Index < 8) {							//if index is out of bound, then wait for next start impulse
+				int2Value[int2Index] = nDifference;			//save actual time difference to value
+				int2Index++; 								//increment index by one
 			}
-			int2Value[int2Index] = nDifference;				//save actual time difference to value
-			int2Index++; 									//increment index by one
 		}
 	}
 
@@ -241,6 +244,34 @@ void ppmServoInterrupt(){
 	int3LastChange = nMicros;								//save time for next interrupt
 }
 
-
+#if (debugLevel >=3)
+void debugInterrupt() {
+	if((millis()%1000 >= 500) && (serialIsSent == false)) {
+		Serial.println("--Start---");
+		Serial.println(int1Value[0]);
+		Serial.println(int1Value[1]);
+		Serial.println(int1Value[2]);
+		Serial.println(int1Value[3]);
+		Serial.println(int1Value[4]);
+		Serial.println(int1Value[5]);
+		Serial.println(int1Value[6]);
+		Serial.println(int1Value[7]);
+		Serial.println("---End----");
+		Serial.println("--Start2---");
+		Serial.println(int2Value[0]);
+		Serial.println(int2Value[1]);
+		Serial.println(int2Value[2]);
+		Serial.println(int2Value[3]);
+		Serial.println(int2Value[4]);
+		Serial.println(int2Value[5]);
+		Serial.println(int2Value[6]);
+		Serial.println(int2Value[7]);
+		Serial.println("---End----");
+		serialIsSent = true;
+	} else if((millis()%1000 < 500) && (serialIsSent == true)) {
+		serialIsSent = false;
+	}
+}
+	#endif
 
 

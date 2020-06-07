@@ -1,5 +1,9 @@
 Release Notes
 
+v0.0.7 07.06.2020
+- improve interrupt routine
+- debuging for interrupt Data
+
 v0.0.6 03.06.2020
 - new function for ppm evaluation
 - new function to set up outputs
