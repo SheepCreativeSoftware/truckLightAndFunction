@@ -1,5 +1,8 @@
 Release Notes
 
+v0.0.8 08.06.2020
+- added directives for serial communication
+
 v0.0.7 07.06.2020
 - improve interrupt routine
 - debuging for interrupt Data

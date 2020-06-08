@@ -1,6 +1,6 @@
 /************************************ 
- * truckLightAndFunction v0.0.7
- * Date: 07.06.2020 | 19:00
+ * truckLightAndFunction v0.0.8
+ * Date: 08.06.2020 | 18:14
  * <Truck Light and function module>
  * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
@@ -21,20 +21,19 @@
  ************************************/
 #define ContryOption EU                   //Setup Region EU or US for Truck
 #define HeadLightCombine false            //High => Low and High Beam on both Head Light output Pins | False => Seperate Pins for High and Low Beam 
-#define wireCom false                     //Activate Communication to other modules via I2C 
-#if (wireCom == true)
-	#define truckAdress 1                     //I2C Adress for this Module: Truck
-	#define beaconAdress 2                    //I2C Adress for Module: Beacon Lights Extension
-	#define trailerAdress 3                   //I2C Adress for Module: Trailer 
-	#define extFunctionAdress 4               //I2C Adress for Module: Special function for example Servos Steering
+#define serialCom false                     //Activate Communication to other modules via Serial 
+#if (serialCom == true)
+	#define truckAdress 1                 //Serial Adress for this Module: Truck
+	#define beaconAdress 2                //Serial Adress for Module: Beacon Lights Extension
+	#define trailerAdress 3               //Serial Adress for Module: Trailer 
+	#define extFunctionAdress 4           //Serial Adress for Module: Special function for example Servos Steering
 #endif
-#define debugLevel 3	
+//Change this value for different debuging levels
+#define debugLevel 3						//1 = Status LED | >2 = Serial Monitor
+
 /************************************
  * Include Files
  ************************************/
-#if (wireCom == true)
-#include <Wire.h>                         		//Include I2C Library
-#endif
 #include <SoftPWM.h>							//https://github.com/bhagman/SoftPWM
 #include "truckFunctions.h"						//Special functions
 /************************************
@@ -42,7 +41,7 @@
  ************************************/
 // TODO: setup correct pins
 //Pinout Arduino Micro:
-//I2C 2+3 | PWM 3, 5, 6, 9, 10, 11, 13 | LED 13
+//HW Serial 0+1 | I2C 2+3 | PWM 3, 5, 6, 9, 10, 11, 13 | LED 13
 //Servo Lib deactivates PWM functionality on pins 9 and 10
 
 //Inputs
@@ -73,6 +72,35 @@
  * Definition and Initialisation 
  * Global Vars, Classes and Functions
  ************************************/
+// These serial port names are intended to allow libraries and architecture-neutral
+// sketches to automatically default to the correct port name for a particular type
+// of use.  For example, a GPS module would normally connect to SERIAL_PORT_HARDWARE_OPEN,
+// the first hardware serial port whose RX/TX pins are not dedicated to another use.
+//
+// SERIAL_PORT_MONITOR        Port which normally prints to the Arduino Serial Monitor
+//
+// SERIAL_PORT_USBVIRTUAL     Port which is USB virtual serial
+//
+// SERIAL_PORT_LINUXBRIDGE    Port which connects to a Linux system via Bridge library
+//
+// SERIAL_PORT_HARDWARE       Hardware serial port, physical RX & TX pins.
+//
+// SERIAL_PORT_HARDWARE_OPEN  Hardware serial ports which are open for use.  Their RX & TX
+//                            pins are NOT connected to anything by default.
+#if (SERIAL_PORT_MONITOR != SERIAL_PORT_HARDWARE) 	//if serial ports are different then the arduino has more than one serial port
+	#ifndef SerialUSB								//if not allready defined
+		#define SerialUSB SERIAL_PORT_MONITOR		//then define monitor port
+	#endif
+#else
+	#if (debugLevel >1)								//if serial ports are the same debuging is not possible (for example on UNO)
+		#define debugLevel 1						//do not change!!!
+	#endif
+#endif
+#ifndef SerialHW									//if not allready defined
+	#define SerialHW SERIAL_PORT_HARDWARE			//then define hardware port
+#endif
+
+
 bool pulseStatus = false;
 unsigned long StatusPreviousMillis = 0;
 unsigned long blinkOnTime = 0;
@@ -134,12 +162,14 @@ void setup() {
 	attachInterrupt(digitalPinToInterrupt(inFunction1ControlPPM), ppmMultiInterrupt1, CHANGE); 	//Setup Interrupt
 	attachInterrupt(digitalPinToInterrupt(inFunction2ControlPPM), ppmMultiInterrupt2, CHANGE);	//Setup Interrupt
 	attachInterrupt(digitalPinToInterrupt(inSteerControlPPM), ppmServoInterrupt, CHANGE);		//Setup Interrupt
+	#if (serialCom == true)
+	SerialHW.begin(115200);  // start Serial for Communication
+	#endif
 	#if (debugLevel >=1)
 	pinMode(outStatusLed, OUTPUT);
 	#endif
-	
 	#if (debugLevel >=2)
-	Serial.begin(9600);  // start serial for output
+	SerialUSB.begin(9600);  // start Serial for Monitoring
 	#endif
 	delay(5000);
 // TODO: Setup IO pins
@@ -247,26 +277,26 @@ void ppmServoInterrupt(){
 #if (debugLevel >=3)
 void debugInterrupt() {
 	if((millis()%1000 >= 500) && (serialIsSent == false)) {
-		Serial.println("--Start---");
-		Serial.println(int1Value[0]);
-		Serial.println(int1Value[1]);
-		Serial.println(int1Value[2]);
-		Serial.println(int1Value[3]);
-		Serial.println(int1Value[4]);
-		Serial.println(int1Value[5]);
-		Serial.println(int1Value[6]);
-		Serial.println(int1Value[7]);
-		Serial.println("---End----");
-		Serial.println("--Start2---");
-		Serial.println(int2Value[0]);
-		Serial.println(int2Value[1]);
-		Serial.println(int2Value[2]);
-		Serial.println(int2Value[3]);
-		Serial.println(int2Value[4]);
-		Serial.println(int2Value[5]);
-		Serial.println(int2Value[6]);
-		Serial.println(int2Value[7]);
-		Serial.println("---End----");
+		SerialUSB.println("--Start---");
+		SerialUSB.println(int1Value[0]);
+		SerialUSB.println(int1Value[1]);
+		SerialUSB.println(int1Value[2]);
+		SerialUSB.println(int1Value[3]);
+		SerialUSB.println(int1Value[4]);
+		SerialUSB.println(int1Value[5]);
+		SerialUSB.println(int1Value[6]);
+		SerialUSB.println(int1Value[7]);
+		SerialUSB.println("---End----");
+		SerialUSB.println("--Start2---");
+		SerialUSB.println(int2Value[0]);
+		SerialUSB.println(int2Value[1]);
+		SerialUSB.println(int2Value[2]);
+		SerialUSB.println(int2Value[3]);
+		SerialUSB.println(int2Value[4]);
+		SerialUSB.println(int2Value[5]);
+		SerialUSB.println(int2Value[6]);
+		SerialUSB.println(int2Value[7]);
+		SerialUSB.println("---End----");
 		serialIsSent = true;
 	} else if((millis()%1000 < 500) && (serialIsSent == true)) {
 		serialIsSent = false;
