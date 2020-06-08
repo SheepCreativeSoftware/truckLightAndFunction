@@ -1,6 +1,6 @@
 /************************************ 
- * truckLightAndFunction v0.0.8
- * Date: 08.06.2020 | 18:14
+ * truckLightAndFunction v0.0.9
+ * Date: 09.06.2020 | 00:30
  * <Truck Light and function module>
  * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
@@ -87,7 +87,8 @@
 //
 // SERIAL_PORT_HARDWARE_OPEN  Hardware serial ports which are open for use.  Their RX & TX
 //                            pins are NOT connected to anything by default.
-#if (SERIAL_PORT_MONITOR != SERIAL_PORT_HARDWARE) 	//if serial ports are different then the arduino has more than one serial port
+//Setup Serial and check if Board is UNO with one Serial or Leonardo/Micro with to Serials
+#if defined(HAVE_HWSERIAL1)							//if serial ports 1 exist then the arduino has more than one serial port
 	#ifndef SerialUSB								//if not allready defined
 		#define SerialUSB SERIAL_PORT_MONITOR		//then define monitor port
 	#endif
@@ -102,18 +103,20 @@
 
 
 bool pulseStatus = false;
-unsigned long StatusPreviousMillis = 0;
-unsigned long blinkOnTime = 0;
+uint32_t StatusPreviousMillis = 0;
+uint32_t blinkOnTime = 0;
 
 //Vars for Interrupt
-volatile int int1Value[8] = {0};		//saves time difference of every channel
-volatile int int1Index = 0;				//actual index for interrupt
-volatile long int1LastChange = 0;		//time since last interrupt
-volatile int int2Value[8] = {0};		//saves time difference of every channel
-volatile int int2Index = 0;				//actual index for interrupt
-volatile long int2LastChange = 0;		//time since last interrupt
-volatile int int3Value = 0;				//saves time difference of this channel
-volatile long int3LastChange = 0;		//time since last interrupt
+volatile uint16_t int1Value[8] = {0};		//saves time difference of every channel
+volatile uint8_t int1Index = 0;				//actual index for interrupt
+volatile uint32_t int1LastChange = 0;		//time since last interrupt
+volatile uint32_t int1LastSave = 0;			//time since last valid save in interrupt
+volatile uint16_t int2Value[8] = {0};		//saves time difference of every channel
+volatile uint8_t int2Index = 0;				//actual index for interrupt
+volatile uint32_t int2LastChange = 0;		//time since last interrupt
+volatile uint32_t int2LastSave = 0;			//time since last valid save in interrupt
+volatile uint8_t int3Value = 0;				//saves time difference of this channel
+volatile uint32_t int3LastChange = 0;		//time since last interrupt
 
 //Vars for debug
 #if (debugLevel >=1)
@@ -123,15 +126,15 @@ volatile long int3LastChange = 0;		//time since last interrupt
 
 //Functions
 bool controllerStatus(bool);			//function to signal errorstate
-int blink(unsigned int);				//function for blink mechanism
+uint8_t blink(uint16_t);				//function for blink mechanism
 void ppmMultiInterrupt1();				//function for interrupt of first PPM signal
 void ppmMultiInterrupt2();				//function for interrupt of second PPM signal
 void ppmServoInterrupt();				//function for interrupt of servo PPM signal
 void debugInterrupt();					//function to debug the interrupt data
-
+bool ppmChannel1Evaluation();				//function to evaluate the ppm signals
+bool ppmChannel2Evaluation();				//function to evaluate the ppm signals
 
 //Classes
-outputDefine Output[10];
 
 void setup() {
 	SoftPWMBegin();
@@ -179,7 +182,6 @@ void loop() {                             // put your main code here, to run rep
 	#if (debugLevel >=1)
 		bool errorFlag = false;                 				// local var for error status
 	#endif
-	
 	bool dynBrakeSignal = digitalRead(inBrakeSignal);			//Read digital Input and copy to dynamic var
 	bool dynReverseSignal = digitalRead(inReverseSignal);		//Read digital Input and copy to dynamic var
 	// bool dynParkingLight = 0;
@@ -189,7 +191,10 @@ void loop() {                             // put your main code here, to run rep
 	// bool dynLeftFlashLight = 0;
 	// bool dynRightFlashLight = 0;
 	// bool dynAuxLight = 0;
-
+	bool dynStatus = ppmChannel1Evaluation();
+	if(!dynStatus) errorFlag = true;
+	dynStatus = ppmChannel2Evaluation();
+	if(!dynStatus) errorFlag = true;
 	digitalWrite(outBrakeLight, dynBrakeSignal);				//Copy var to Output
 	digitalWrite(outReverseLight, dynReverseSignal);			//Copy var to Output
 	
@@ -198,15 +203,16 @@ void loop() {                             // put your main code here, to run rep
 		controllerStatus(errorFlag);
 	#endif
 	#if (debugLevel >=3)
-	debugInterrupt();
+		debugInterrupt();
 	#endif
 }
+
 #if (debugLevel >=1)
 bool controllerStatus(bool errorFlag) {
 	if(errorFlag) {
 		return true;
 	} else {
-		unsigned long currentMillis = millis();
+		uint32_t currentMillis = millis();
     if (currentMillis - StatusPreviousMillis >= 1000) { 	//Zeitverzoegerte Abfrage
 		StatusPreviousMillis = currentMillis;
 		pulseStatus = !pulseStatus;
@@ -217,11 +223,11 @@ bool controllerStatus(bool errorFlag) {
 	}
 }
 #endif
-int blink(unsigned int blinkTimeMillis) {
+uint8_t blink(uint16_t blinkTimeMillis) {
 	if((blinkOnTime == 0) || (blinkOnTime > millis())){ 	//Reset blinkOnTime on startup and on overflow.
 		blinkOnTime = millis();
 	}
-		unsigned long blinkTime = millis() - blinkOnTime;
+		uint32_t blinkTime = millis() - blinkOnTime;
 	if(blinkTime%blinkTimeMillis >= blinkTimeMillis/2){ 	//ON/OFF Interval at half of Time.
 		return 0;
 	} else {
@@ -231,8 +237,8 @@ int blink(unsigned int blinkTimeMillis) {
 }
 
 void ppmMultiInterrupt1(){
-	volatile long nMicros = micros(); 						//Save actual time
-	volatile long nDifference = (nMicros - int1LastChange); //Calc time since last Change
+	volatile uint32_t nMicros = micros(); 						//Save actual time
+	volatile uint32_t nDifference = (nMicros - int1LastChange); //Calc time since last Change
 	if((nDifference > 700) && (nDifference < 2200)) { 		//Filter HIGH Impulse | HIGH if time is between 700 and 2200 
 		if((nDifference > 850) && (nDifference < 980)) { 	//if time is ~915 then this is the start impulse
 			int1Index = 0; 									//then set index to 0
@@ -240,6 +246,7 @@ void ppmMultiInterrupt1(){
 			if (int1Index < 8) {							//if index is out of bound, then wait for next start impulse
 				int1Value[int1Index] = nDifference;			//save actual time difference to value
 				int1Index++; 								//increment index by one
+				int1LastSave = millis();					//save time of the last valid signal
 			}
 		}
 	}
@@ -248,8 +255,8 @@ void ppmMultiInterrupt1(){
 }
 
 void ppmMultiInterrupt2(){
-	volatile long nMicros = micros(); 						//Save actual time
-	volatile long nDifference = (nMicros - int2LastChange); //Calc time since last Change
+	volatile uint32_t nMicros = micros(); 						//Save actual time
+	volatile uint32_t nDifference = (nMicros - int2LastChange); //Calc time since last Change
 	if((nDifference > 700) && (nDifference < 2200)) { 		//Filter HIGH Impulse | HIGH if time is between 700 and 2200 
 		if((nDifference > 850) && (nDifference < 980)) { 	//if time is ~915 then this is the start impulse
 			int2Index = 0; 									//then set index to 0
@@ -257,6 +264,7 @@ void ppmMultiInterrupt2(){
 			if (int2Index < 8) {							//if index is out of bound, then wait for next start impulse
 				int2Value[int2Index] = nDifference;			//save actual time difference to value
 				int2Index++; 								//increment index by one
+				int2LastSave = millis();					//save time of the last valid signal
 			}
 		}
 	}
@@ -265,8 +273,8 @@ void ppmMultiInterrupt2(){
 }
 
 void ppmServoInterrupt(){
-	volatile long nMicros = micros(); 						//Save actual time
-	volatile long nDifference = (nMicros - int3LastChange); //Calc time since last Change
+	volatile uint32_t nMicros = micros(); 						//Save actual time
+	volatile uint32_t nDifference = (nMicros - int3LastChange); //Calc time since last Change
 	if((nDifference > 700) && (nDifference < 2200)) { 		//Filter HIGH Impulse | HIGH if time is between 700 and 2200 
 		int3Value = nDifference;							//save actual time difference to value
 	}
@@ -303,5 +311,60 @@ void debugInterrupt() {
 	}
 }
 	#endif
+uint32_t maxTimeForInterrupt = 2000; //max time in milliseconds
+uint8_t channel1Switch[6] = { 0 };
+uint16_t channel1Poti[2] = { 0 };
+bool ppmChannel1Evaluation() {
+	// 16:59:31.637 -> 1504 	row below:	1 Poti (0-100% -> 1000-2000)
+	// 16:59:31.637 -> 1568	row below:	2 Poti (0-100% -> 1000-2000)
+	// 16:59:31.637 -> 1516	row below:	3 switch (up/mid/down 1000/1500/2000)
+	// 16:59:31.637 -> 1528	row below: 	4 switch (up/mid/down 1000/1500/2000)
+	// 16:59:31.637 -> 1508	row below:		1 button (up/mid/down 1000/1500/2000)
+	// 16:59:31.637 -> 1532	row below:		2 switch (up/mid/down 1000/1500/2000)
+	// 16:59:31.637 -> 1532	row below:		3 switch (up/mid/down 1000/1500/2000)
+	// 16:59:31.637 -> 1528	row below:		4 button/switch (up/mid/down 1000/1500/2000)
 
+	if((millis()-int1LastSave) >= maxTimeForInterrupt) {
+		for(uint8_t i = 0; i < 8; i++) {
+			int1Value[i] = 0;
+		}
+		return 0;
+	} else {
+		channel1Poti[0] = ppmServoToRange(int1Value[0], 1000, 2000, 0, 1023);
+		channel1Poti[1] = ppmServoToRange(int1Value[1], 1000, 2000, 0, 1023);
+		channel1Switch[0] = ppmToSwitchStages(int1Value[2]);
+		channel1Switch[1] = ppmToSwitchStages(int1Value[3]);
+		channel1Switch[2] = ppmToSwitchStages(int1Value[4]);
+		channel1Switch[3] = ppmToSwitchStages(int1Value[5]);
+		channel1Switch[4] = ppmToSwitchStages(int1Value[6]);
+		channel1Switch[5] = ppmToSwitchStages(int1Value[7]);
+		return 1;
+	}	
+}
 
+uint8_t channel2Switch[8] = { 0 };
+bool ppmChannel2Evaluation() {
+	// 16:59:31.637 -> 1976	row below:		4 button (up/down 2000/1000)
+	// 16:59:31.637 -> 1984	row below:		3 switch (up/down 2000/1000)
+	// 16:59:31.637 -> 1980	row below:		2 switch (up/down 2000/1000)
+	// 16:59:31.637 -> 1980	row below:		1 switch (up/down 2000/1000)
+	// 16:59:31.637 -> 1696	row below:	2 switch (up/mid/down 1000/1700/1700)
+	// 16:59:31.637 -> 1716	row below:	2 switch (up/mid/down 1700/1700/1000)
+	// 16:59:31.637 -> 1692	row below:	1 switch (up/mid/down 1000/1700/1700)
+	// 16:59:31.637 -> 1696	row below:	1 switch (up/mid/down 1700/1700/1000)
+
+	if((millis()-int2LastSave) >= maxTimeForInterrupt) {
+		for(uint8_t i = 0; i < 8; i++) {
+			int2Value[i] = 0;
+		}
+		return 0;
+	} else {
+		channel2Switch[0] = ppmToSwitchStages(int2Value[0]);
+		channel2Switch[1] = ppmToSwitchStages(int2Value[1]);
+		channel2Switch[2] = ppmToSwitchStages(int2Value[2]);
+		channel2Switch[3] = ppmToSwitchStages(int2Value[3]);
+		channel2Switch[4] = ppm2ToSwitch3Stages(int2Value[4], int2Value[5]);
+		channel2Switch[5] = ppm2ToSwitch3Stages(int2Value[6], int2Value[7]);
+		return 1;
+	}	
+}

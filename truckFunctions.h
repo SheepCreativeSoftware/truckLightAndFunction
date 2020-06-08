@@ -1,6 +1,6 @@
 /************************************ 
- * truckLightAndFunction v0.0.6
- * Date: 03.06.2020 | 22:16
+ * truckLightAndFunction v0.0.9
+ * Date: 09.06.2020 | 00:30
  * <Truck Light and function module>
  * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
@@ -24,8 +24,9 @@
 #define OUT_SOFT_FADE 3
 #define OUT_DIGITAL 4
 //Functions
-int ppmToSwitchStages(unsigned int);	//function to evaluate the ppm signal of a switch
-int ppmServoToRange(int, int, int, int, int);
+uint8_t ppmToSwitchStages(uint16_t);	//function to evaluate the ppm signal of a switch
+uint8_t ppm2ToSwitch3Stages(uint16_t, uint16_t);
+uint16_t ppmServoToRange(int16_t, int16_t, int16_t, int16_t, int16_t);
 
 //Classes
 class edgeEvaluation {
@@ -34,7 +35,7 @@ class edgeEvaluation {
 		bool readEdge(int input);
 };
 
-
+/*
 class outputDefine {
 		unsigned int outPinModus;
     public:
@@ -43,6 +44,6 @@ class outputDefine {
 		void outputMode(int outPin, unsigned char modus, int fadeUpTime, int fadeDownTime);		
 };
 //Modus pwmHW softPWM softFade digital
-
+*/
 
 #endif

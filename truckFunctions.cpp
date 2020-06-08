@@ -1,6 +1,6 @@
 /************************************ 
- * truckLightAndFunction v0.0.6
- * Date: 03.06.2020 | 22:16
+ * truckLightAndFunction v0.0.9
+ * Date: 09.06.2020 | 00:30
  * <Truck Light and function module>
  * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
@@ -23,7 +23,7 @@
  * PPM Signal have a range from 1000ms to 2000ms
  * So 3 stages should be 1000/1500/2000
  ***************************************************/
-int ppmToSwitchStages(unsigned int signal) {
+uint8_t ppmToSwitchStages(uint16_t signal) {
 	if((signal >= 750) && (signal <= 1250)) {	//if signal is at 1000ms ±250ms 
 		return 1;								//return 1 if signal is at lower end
 	} else if(signal <= 1750) {					//else if signal is at 1500ms ±250ms
@@ -35,13 +35,25 @@ int ppmToSwitchStages(unsigned int signal) {
 	}
 }
 
+uint8_t ppm2ToSwitch3Stages(uint16_t signal1, uint16_t signal2) {
+	if((signal1 >= 750) && (signal1 <= 1250)) {			//if signal is at 1000ms ±250ms 
+		return 1;										//return 1 if signal is at lower end
+	} else if((signal2 >= 750) && (signal2 <= 1250)) {	//else if signal is at 2000ms ±250ms
+		return 3;										//return 3 if signal is at upper end
+	} else if((signal1 <= 2000) && (signal2 <= 2000)) {	//else if signal is at 1500ms ±250ms
+		return 2;										//return 2 if signal is at middle
+	} else {											//else signal is <750 or >2250
+		return 0;										//return 0 cause signal is out of bound | error
+	}
+}
+
 /***************************************************
  * PPM Signal have a range from 1000ms to 2000ms
  * input Range of signal is defined by inMin (~1000) inMax (~2000)
  * returns a value from outMin to outMax
  * if calculation fails a zero returns
  ***************************************************/
-int ppmServoToRange(int signal, int inMin, int inMax, int outMin, int outMax) {
+uint16_t ppmServoToRange(int16_t signal, int16_t inMin, int16_t inMax, int16_t outMin, int16_t outMax) {
 	if(inMin != inMax) {						//if Min and Max are equal abbort calculation cause of divide by zero
 		return (signal - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
 	} else {
@@ -59,7 +71,7 @@ bool edgeEvaluation::readEdge(int input){
 	} 
 	return false;
 }
-
+/*
 void outputDefine::outputMode(int outPin, unsigned char modus){
 	pinMode(outPin, OUTPUT);
 	outPinModus = modus;
@@ -91,4 +103,4 @@ void outputDefine::outputMode(int outPin, unsigned char modus, int fadeUpTime, i
 		break;		
 	}
 }
-
+*/

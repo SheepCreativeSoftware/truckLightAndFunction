@@ -1,5 +1,10 @@
 Release Notes
 
+v0.0.9 09.06.2020
+- reorganised data types
+- added function for 2 channel switch 
+- added fuction to evaluate all switches from channel1+2
+
 v0.0.8 08.06.2020
 - added directives for serial communication
 
