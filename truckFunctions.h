@@ -1,6 +1,6 @@
 /************************************ 
- * truckLightAndFunction v0.0.9
- * Date: 09.06.2020 | 00:30
+ * truckLightAndFunction v0.0.10
+ * Date: 09.06.2020 | 19:27
  * <Truck Light and function module>
  * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
@@ -19,22 +19,29 @@
 #ifndef _TRUCKFUNCTIONS_H_
 #define _TRUCKFUNCTIONS_H_
 //Definition
-#define OUT_HARD_PWM 1
-#define OUT_SOFT_PWM 2
-#define OUT_SOFT_FADE 3
-#define OUT_DIGITAL 4
+#define DIRECTION_UP 1
+#define DIRECTION_MID 2
+#define DIRECTION_DOWN 3
+#define PPM_INVERT 1
+
 //Functions
-uint8_t ppmToSwitchStages(uint16_t);	//function to evaluate the ppm signal of a switch
-uint8_t ppm2ToSwitch3Stages(uint16_t, uint16_t);
-uint16_t ppmServoToRange(int16_t, int16_t, int16_t, int16_t, int16_t);
+uint8_t ppmToSwitchStages(uint16_t signal, bool invertDirection = 0);	//function to evaluate the ppm signal of a switch
+uint8_t ppm2ToSwitch3Stages(uint16_t signal1, uint16_t signal2);
+uint16_t ppmServoToRange(int16_t signal, int16_t inMin = 1000, int16_t inMax = 2000, int16_t outMin = 0, int16_t outMax = 1023);
 
 //Classes
-class edgeEvaluation {
+class EdgeEvaluation {
 		bool lastEdge;
     public:
-		bool readEdge(int input);
+		bool readEdge(bool input);
 };
 
+class Filter {
+		uint16_t lastValue;
+		bool doneFilter;
+    public:
+		uint16_t filterValue(uint16_t input, uint16_t filterFactor = 10, uint16_t filterTime = 1000);
+};
 /*
 class outputDefine {
 		unsigned int outPinModus;

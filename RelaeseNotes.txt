@@ -1,6 +1,13 @@
 Release Notes
 
 v0.0.9 09.06.2020
+- added filter function
+- added word for up/mid/down number
+- added optional argument for inverted output for ppmToSwitchStages function
+- fix argument tipe of edgeEvaluation
+- restructure classes they are begining now with upper case
+
+v0.0.9 09.06.2020
 - reorganised data types
 - added function for 2 channel switch 
 - added fuction to evaluate all switches from channel1+2

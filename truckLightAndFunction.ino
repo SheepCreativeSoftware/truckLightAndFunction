@@ -1,6 +1,6 @@
 /************************************ 
- * truckLightAndFunction v0.0.9
- * Date: 09.06.2020 | 00:30
+ * truckLightAndFunction v0.0.10
+ * Date: 09.06.2020 | 19:27
  * <Truck Light and function module>
  * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
@@ -359,10 +359,10 @@ bool ppmChannel2Evaluation() {
 		}
 		return 0;
 	} else {
-		channel2Switch[0] = ppmToSwitchStages(int2Value[0]);
-		channel2Switch[1] = ppmToSwitchStages(int2Value[1]);
-		channel2Switch[2] = ppmToSwitchStages(int2Value[2]);
-		channel2Switch[3] = ppmToSwitchStages(int2Value[3]);
+		channel2Switch[0] = ppmToSwitchStages(int2Value[0], PPM_INVERT);
+		channel2Switch[1] = ppmToSwitchStages(int2Value[1], PPM_INVERT);
+		channel2Switch[2] = ppmToSwitchStages(int2Value[2], PPM_INVERT);
+		channel2Switch[3] = ppmToSwitchStages(int2Value[3], PPM_INVERT);
 		channel2Switch[4] = ppm2ToSwitch3Stages(int2Value[4], int2Value[5]);
 		channel2Switch[5] = ppm2ToSwitch3Stages(int2Value[6], int2Value[7]);
 		return 1;

@@ -1,6 +1,6 @@
 /************************************ 
- * truckLightAndFunction v0.0.9
- * Date: 09.06.2020 | 00:30
+ * truckLightAndFunction v0.0.10
+ * Date: 09.06.2020 | 19:27
  * <Truck Light and function module>
  * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
@@ -21,27 +21,44 @@
 
 /***************************************************
  * PPM Signal have a range from 1000ms to 2000ms
- * So 3 stages should be 1000/1500/2000
+ * So 3 stages should be 1000/1500/2000 => UP/MID/DOWN
+ * invertDirection is optional to turn the direction of UP and DOWN
  ***************************************************/
-uint8_t ppmToSwitchStages(uint16_t signal) {
+uint8_t ppmToSwitchStages(uint16_t signal, bool invertDirection) {
+	uint8_t dynDirectionUp;
+	uint8_t dynDirectionDown;
+	if(invertDirection) {						//if switch output is inverted
+		dynDirectionUp = DIRECTION_DOWN;			//then assign opposite direction
+		dynDirectionDown = DIRECTION_UP;
+	} else {
+		dynDirectionUp = DIRECTION_UP;			//else assign same direction
+		dynDirectionDown = DIRECTION_DOWN;
+	}
 	if((signal >= 750) && (signal <= 1250)) {	//if signal is at 1000ms ±250ms 
-		return 1;								//return 1 if signal is at lower end
+		return dynDirectionUp;								//return 1 if signal is at lower end
 	} else if(signal <= 1750) {					//else if signal is at 1500ms ±250ms
-		return 2;								//return 2 if signal is at middle
+		return DIRECTION_MID;								//return 2 if signal is at middle
 	} else if(signal <= 2250) {					//else if signal is at 2000ms ±250ms
-		return 3;								//return 3 if signal is at upper end
+		return dynDirectionDown;								//return 3 if signal is at upper end
 	} else {									//else signal is <750 or >2250
 		return 0;								//return 0 cause signal is out of bound | error
 	}
 }
 
+/***************************************************
+ * PPM Signal have a range from 1000ms to 2000ms
+ * 3 Stages on 2 signals
+ * If first signal have ~1000 the switch is in up position
+ * If both signals have ~1700 the switch is in middle position
+ * If second signal have ~1000 the switch is in down position
+ ***************************************************/
 uint8_t ppm2ToSwitch3Stages(uint16_t signal1, uint16_t signal2) {
 	if((signal1 >= 750) && (signal1 <= 1250)) {			//if signal is at 1000ms ±250ms 
-		return 1;										//return 1 if signal is at lower end
+		return DIRECTION_UP;										//return 1 if signal is at lower end
 	} else if((signal2 >= 750) && (signal2 <= 1250)) {	//else if signal is at 2000ms ±250ms
-		return 3;										//return 3 if signal is at upper end
+		return DIRECTION_DOWN;										//return 3 if signal is at upper end
 	} else if((signal1 <= 2000) && (signal2 <= 2000)) {	//else if signal is at 1500ms ±250ms
-		return 2;										//return 2 if signal is at middle
+		return DIRECTION_MID;										//return 2 if signal is at middle
 	} else {											//else signal is <750 or >2250
 		return 0;										//return 0 cause signal is out of bound | error
 	}
@@ -55,13 +72,13 @@ uint8_t ppm2ToSwitch3Stages(uint16_t signal1, uint16_t signal2) {
  ***************************************************/
 uint16_t ppmServoToRange(int16_t signal, int16_t inMin, int16_t inMax, int16_t outMin, int16_t outMax) {
 	if(inMin != inMax) {						//if Min and Max are equal abbort calculation cause of divide by zero
-		return (signal - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
+		return (signal - inMin) * (outMax - outMin) / (inMax - inMin) + outMin; 
 	} else {
 		return 0;
 	}
 }
 
-bool edgeEvaluation::readEdge(int input){
+bool EdgeEvaluation::readEdge(bool input){
 	if((input) && (!lastEdge)){
 		lastEdge = true;
 		return true;
@@ -71,6 +88,18 @@ bool edgeEvaluation::readEdge(int input){
 	} 
 	return false;
 }
+
+uint16_t Filter::filterValue(uint16_t input, uint16_t filterFactor, uint16_t filterTime){
+	if((millis()%filterTime >= filterTime/2) && (doneFilter == false)) {
+		lastValue = (input - lastValue) / filterFactor + lastValue; 
+		doneFilter = true;
+	} else if((millis()%filterTime < filterTime/2) && (doneFilter == true)) {
+		doneFilter = false;
+	}
+	
+	return lastValue;
+}
+
 /*
 void outputDefine::outputMode(int outPin, unsigned char modus){
 	pinMode(outPin, OUTPUT);
