@@ -1,6 +1,6 @@
 /************************************ 
- * truckLightAndFunction v0.0.10
- * Date: 09.06.2020 | 19:27
+ * truckLightAndFunction v0.0.11
+ * Date: 10.06.2020 | 00:25
  * <Truck Light and function module>
  * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
@@ -70,9 +70,13 @@ uint8_t ppm2ToSwitch3Stages(uint16_t signal1, uint16_t signal2) {
  * returns a value from outMin to outMax
  * if calculation fails a zero returns
  ***************************************************/
-uint16_t ppmServoToRange(int16_t signal, int16_t inMin, int16_t inMax, int16_t outMin, int16_t outMax) {
+int32_t ppmServoToRange(int32_t signal, int32_t inMin, int32_t inMax, int32_t outMin, int32_t outMax) {
+	int32_t dynResult;
 	if(inMin != inMax) {						//if Min and Max are equal abbort calculation cause of divide by zero
-		return (signal - inMin) * (outMax - outMin) / (inMax - inMin) + outMin; 
+		dynResult = (signal - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
+		if(dynResult > outMax) dynResult = outMax;
+		if(dynResult < outMin) dynResult = outMin;
+		return dynResult; 
 	} else {
 		return 0;
 	}
@@ -89,7 +93,7 @@ bool EdgeEvaluation::readEdge(bool input){
 	return false;
 }
 
-uint16_t Filter::filterValue(uint16_t input, uint16_t filterFactor, uint16_t filterTime){
+int16_t Filter::filterValue(int16_t input, int16_t filterFactor, uint16_t filterTime){
 	if((millis()%filterTime >= filterTime/2) && (doneFilter == false)) {
 		lastValue = (input - lastValue) / filterFactor + lastValue; 
 		doneFilter = true;

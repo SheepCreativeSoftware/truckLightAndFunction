@@ -1,5 +1,11 @@
 Release Notes
 
+v0.0.11
+- test new functions
+- fix datatypes in ppmPoti function
+- add debuging for channel evaluation
+- add filter to ppPoti evaluation
+
 v0.0.9 09.06.2020
 - added filter function
 - added word for up/mid/down number

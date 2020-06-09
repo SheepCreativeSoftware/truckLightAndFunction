@@ -1,6 +1,6 @@
 /************************************ 
- * truckLightAndFunction v0.0.10
- * Date: 09.06.2020 | 19:27
+ * truckLightAndFunction v0.0.11
+ * Date: 10.06.2020 | 00:25
  * <Truck Light and function module>
  * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
@@ -118,9 +118,16 @@ volatile uint32_t int2LastSave = 0;			//time since last valid save in interrupt
 volatile uint8_t int3Value = 0;				//saves time difference of this channel
 volatile uint32_t int3LastChange = 0;		//time since last interrupt
 
+//Vars for Channel Evaluation
+uint32_t maxTimeForInterrupt = 2000; //max time in milliseconds
+uint8_t channel1Switch[6] = { 0 };
+uint16_t channel1Poti[2] = { 0 };
+uint8_t channel2Switch[8] = { 0 };
+
 //Vars for debug
 #if (debugLevel >=1)
 	bool serialIsSent = false;
+	bool serialIsSent2 = false;
 #endif
 
 
@@ -135,6 +142,8 @@ bool ppmChannel1Evaluation();				//function to evaluate the ppm signals
 bool ppmChannel2Evaluation();				//function to evaluate the ppm signals
 
 //Classes
+Filter filter[2];
+
 
 void setup() {
 	SoftPWMBegin();
@@ -202,7 +211,11 @@ void loop() {                             // put your main code here, to run rep
 	#if (debugLevel >=1)
 		controllerStatus(errorFlag);
 	#endif
+	
 	#if (debugLevel >=3)
+		debugChannelEvaluation();
+	#endif
+	#if (debugLevel >=6)
 		debugInterrupt();
 	#endif
 }
@@ -282,10 +295,10 @@ void ppmServoInterrupt(){
 	int3LastChange = nMicros;								//save time for next interrupt
 }
 
-#if (debugLevel >=3)
+#if (debugLevel >=6)
 void debugInterrupt() {
 	if((millis()%1000 >= 500) && (serialIsSent == false)) {
-		SerialUSB.println("--Start---");
+		SerialUSB.println("--Multiswitch 1--");
 		SerialUSB.println(int1Value[0]);
 		SerialUSB.println(int1Value[1]);
 		SerialUSB.println(int1Value[2]);
@@ -294,8 +307,8 @@ void debugInterrupt() {
 		SerialUSB.println(int1Value[5]);
 		SerialUSB.println(int1Value[6]);
 		SerialUSB.println(int1Value[7]);
-		SerialUSB.println("---End----");
-		SerialUSB.println("--Start2---");
+		SerialUSB.println("-------End-------");
+		SerialUSB.println("--Multiswitch 2--");
 		SerialUSB.println(int2Value[0]);
 		SerialUSB.println(int2Value[1]);
 		SerialUSB.println(int2Value[2]);
@@ -304,16 +317,42 @@ void debugInterrupt() {
 		SerialUSB.println(int2Value[5]);
 		SerialUSB.println(int2Value[6]);
 		SerialUSB.println(int2Value[7]);
-		SerialUSB.println("---End----");
+		SerialUSB.println("-------End-------");
 		serialIsSent = true;
 	} else if((millis()%1000 < 500) && (serialIsSent == true)) {
 		serialIsSent = false;
 	}
 }
+#endif
+#if (debugLevel >=3)
+void debugChannelEvaluation() {
+	if((millis()%1000 >= 500) && (serialIsSent2 == false)) {
+		SerialUSB.println("--Multiswitch 1--");
+		SerialUSB.println(channel1Poti[0]);
+		SerialUSB.println(channel1Poti[1]);
+		SerialUSB.println(channel1Switch[0]);
+		SerialUSB.println(channel1Switch[1]);
+		SerialUSB.println(channel1Switch[2]);
+		SerialUSB.println(channel1Switch[3]);
+		SerialUSB.println(channel1Switch[4]);
+		SerialUSB.println(channel1Switch[5]);
+		SerialUSB.println("-------End-------");
+		SerialUSB.println("--Multiswitch 2--");
+		SerialUSB.println(channel2Switch[0]);
+		SerialUSB.println(channel2Switch[1]);
+		SerialUSB.println(channel2Switch[2]);
+		SerialUSB.println(channel2Switch[3]);
+		SerialUSB.println(channel2Switch[4]);
+		SerialUSB.println(channel2Switch[5]);
+		SerialUSB.println("-------End-------");
+		serialIsSent2 = true;
+	} else if((millis()%1000 < 500) && (serialIsSent2 == true)) {
+		serialIsSent2 = false;
+	}
+}
 	#endif
-uint32_t maxTimeForInterrupt = 2000; //max time in milliseconds
-uint8_t channel1Switch[6] = { 0 };
-uint16_t channel1Poti[2] = { 0 };
+
+
 bool ppmChannel1Evaluation() {
 	// 16:59:31.637 -> 1504 	row below:	1 Poti (0-100% -> 1000-2000)
 	// 16:59:31.637 -> 1568	row below:	2 Poti (0-100% -> 1000-2000)
@@ -330,8 +369,8 @@ bool ppmChannel1Evaluation() {
 		}
 		return 0;
 	} else {
-		channel1Poti[0] = ppmServoToRange(int1Value[0], 1000, 2000, 0, 1023);
-		channel1Poti[1] = ppmServoToRange(int1Value[1], 1000, 2000, 0, 1023);
+		channel1Poti[0] = ppmServoToRange(filter[0].filterValue(int1Value[0]));
+		channel1Poti[1] = ppmServoToRange(filter[1].filterValue(int1Value[1]));
 		channel1Switch[0] = ppmToSwitchStages(int1Value[2]);
 		channel1Switch[1] = ppmToSwitchStages(int1Value[3]);
 		channel1Switch[2] = ppmToSwitchStages(int1Value[4]);
@@ -342,7 +381,6 @@ bool ppmChannel1Evaluation() {
 	}	
 }
 
-uint8_t channel2Switch[8] = { 0 };
 bool ppmChannel2Evaluation() {
 	// 16:59:31.637 -> 1976	row below:		4 button (up/down 2000/1000)
 	// 16:59:31.637 -> 1984	row below:		3 switch (up/down 2000/1000)

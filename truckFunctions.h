@@ -1,6 +1,6 @@
 /************************************ 
- * truckLightAndFunction v0.0.10
- * Date: 09.06.2020 | 19:27
+ * truckLightAndFunction v0.0.11
+ * Date: 10.06.2020 | 00:25
  * <Truck Light and function module>
  * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
@@ -27,7 +27,7 @@
 //Functions
 uint8_t ppmToSwitchStages(uint16_t signal, bool invertDirection = 0);	//function to evaluate the ppm signal of a switch
 uint8_t ppm2ToSwitch3Stages(uint16_t signal1, uint16_t signal2);
-uint16_t ppmServoToRange(int16_t signal, int16_t inMin = 1000, int16_t inMax = 2000, int16_t outMin = 0, int16_t outMax = 1023);
+int32_t ppmServoToRange(int32_t signal, int32_t inMin = 1060, int32_t inMax = 1980, int32_t outMin = 0, int32_t outMax = 1023);
 
 //Classes
 class EdgeEvaluation {
@@ -37,10 +37,10 @@ class EdgeEvaluation {
 };
 
 class Filter {
-		uint16_t lastValue;
+		int16_t lastValue;
 		bool doneFilter;
     public:
-		uint16_t filterValue(uint16_t input, uint16_t filterFactor = 10, uint16_t filterTime = 1000);
+		int16_t filterValue(int16_t input, int16_t filterFactor = 20, uint16_t filterTime = 100);
 };
 /*
 class outputDefine {
