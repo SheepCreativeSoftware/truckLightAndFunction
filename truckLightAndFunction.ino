@@ -26,7 +26,7 @@
  * Include Module and Library Files
  ************************************/
 #include <SoftPWM.h>							//https://github.com/bhagman/SoftPWM
-#include "truckFunctions.h"						//Special functions
+#include "modules/truckFunctions.h"				//Special functions
 
 
 
