@@ -25,15 +25,52 @@
 /************************************
  * Include Module and Library Files
  ************************************/
-#include <SoftPWM.h>							//https://github.com/bhagman/SoftPWM
-#include "modules/truckFunctions.h"				//Special functions
+#include <SoftPWM.h>							// https://github.com/bhagman/SoftPWM
+#include "modules/ppmToSwitches.h"				// Special functions
+#include "modules/readPPMdata.h"				// read Data from Buffer
+#include "modules/debugging.h"					// Handles debbuging info
+#include "modules/lightFunctions.h"
 
 
 
 void setup() {
-	
+	SoftPWMBegin();
+	// put your setup code here, to run once:
+	/************************************
+	* Setup Inputs 
+	************************************/
+	pinMode(inFunction1ControlPPM, INPUT_PULLUP);
+	pinMode(inFunction2ControlPPM, INPUT_PULLUP);
+	pinMode(inSteerControlPPM, INPUT_PULLUP);
+	pinMode(inBrakeSignal, INPUT_PULLUP);
+	pinMode(inReverseSignal, INPUT_PULLUP);
+	/************************************
+	* Setup Outputs 
+	************************************/
+	pinMode(outParkingLight, OUTPUT);
+	pinMode(outLowBeamLight, OUTPUT);
+	pinMode(outHighBeamLight, OUTPUT);
+	pinMode(outFogLight, OUTPUT);
+	pinMode(outFrontLeftFlashLight, OUTPUT);
+	pinMode(outFrontRightFlashLight, OUTPUT);
+	pinMode(outRearLeftFlashLight, OUTPUT);
+	pinMode(outRearRightFlashLight, OUTPUT);
+	pinMode(outReverseLight, OUTPUT);
+	pinMode(outBrakeLight, OUTPUT);
+	pinMode(outAuxLight, OUTPUT);
+	/************************************
+	* Setup Functions
+	************************************/
+	initInterrupts(inFunction1ControlPPM, inFunction2ControlPPM, inSteerControlPPM);
 }
 
 void loop() {                             // put your main code here, to run repeatedly:
+	bool errorFlag = false;
 	
+	bool dynStatus = ppmChannel1Evaluation();
+	if(!dynStatus) errorFlag = true;
+	dynStatus = ppmChannel2Evaluation();
+	if(!dynStatus) errorFlag = true;
+	runLightFunctions();
+
 }

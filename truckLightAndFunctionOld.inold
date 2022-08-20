@@ -146,7 +146,7 @@ Filter filter[2];
 
 
 void setup() {
-	SoftPWMBegin();
+	SoftPWMBegin();#include <SoftPWM.h>							//https://github.com/bhagman/SoftPWM
 	// put your setup code here, to run once:
 	/************************************
 	* Setup Inputs 

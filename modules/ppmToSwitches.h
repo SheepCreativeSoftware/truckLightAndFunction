@@ -16,8 +16,8 @@
  * If not, see <https://www.gnu.org/licenses/>.
  ************************************/
  
-#ifndef _TRUCKFUNCTIONS_H_
-#define _TRUCKFUNCTIONS_H_
+#ifndef _PPM_TO_SWITCHES_h_
+#define _PPM_TO_SWITCHES_h_
 //Definition
 #define DIRECTION_UP 1
 #define DIRECTION_MID 2
@@ -53,4 +53,5 @@ class outputDefine {
 //Modus pwmHW softPWM softFade digital
 */
 
+#include "ppmToSwitches.cpp"
 #endif

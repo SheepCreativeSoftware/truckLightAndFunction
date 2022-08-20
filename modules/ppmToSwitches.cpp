@@ -17,7 +17,7 @@
  ************************************/
 #include "Arduino.h"
 #include <SoftPWM.h>							//https://github.com/bhagman/SoftPWM
-#include "truckFunctions.h"
+#include "ppmToSwitches.h"
 
 /***************************************************
  * PPM Signal have a range from 1000ms to 2000ms
