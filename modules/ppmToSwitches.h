@@ -29,29 +29,5 @@ uint8_t ppmToSwitchStages(uint16_t signal, bool invertDirection = 0);	//function
 uint8_t ppm2ToSwitch3Stages(uint16_t signal1, uint16_t signal2);
 int32_t ppmServoToRange(int32_t signal, int32_t inMin = 1060, int32_t inMax = 1980, int32_t outMin = 0, int32_t outMax = 1023);
 
-//Classes
-class EdgeEvaluation {
-		bool lastEdge;
-    public:
-		bool readEdge(bool input);
-};
-
-class Filter {
-		int16_t lastValue;
-		bool doneFilter;
-    public:
-		int16_t filterValue(int16_t input, int16_t filterFactor = 20, uint16_t filterTime = 100);
-};
-/*
-class outputDefine {
-		unsigned int outPinModus;
-    public:
-		
-		void outputMode(int outPin, unsigned char modus);
-		void outputMode(int outPin, unsigned char modus, int fadeUpTime, int fadeDownTime);		
-};
-//Modus pwmHW softPWM softFade digital
-*/
-
 #include "ppmToSwitches.cpp"
 #endif

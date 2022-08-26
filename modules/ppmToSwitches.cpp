@@ -16,7 +16,6 @@
  * If not, see <https://www.gnu.org/licenses/>.
  ************************************/
 #include "Arduino.h"
-#include <SoftPWM.h>							//https://github.com/bhagman/SoftPWM
 #include "ppmToSwitches.h"
 
 /***************************************************
@@ -81,59 +80,3 @@ int32_t ppmServoToRange(int32_t signal, int32_t inMin, int32_t inMax, int32_t ou
 		return 0;
 	}
 }
-
-bool EdgeEvaluation::readEdge(bool input){
-	if((input) && (!lastEdge)){
-		lastEdge = true;
-		return true;
-	} else if((!input) && (lastEdge)){
-		lastEdge = false;
-		return false;
-	} 
-	return false;
-}
-
-int16_t Filter::filterValue(int16_t input, int16_t filterFactor, uint16_t filterTime){
-	if((millis()%filterTime >= filterTime/2) && (doneFilter == false)) {
-		lastValue = (input - lastValue) / filterFactor + lastValue; 
-		doneFilter = true;
-	} else if((millis()%filterTime < filterTime/2) && (doneFilter == true)) {
-		doneFilter = false;
-	}
-	
-	return lastValue;
-}
-
-/*
-void outputDefine::outputMode(int outPin, unsigned char modus){
-	pinMode(outPin, OUTPUT);
-	outPinModus = modus;
-	switch (modus) {
-		case OUT_HARD_PWM:
-		analogWrite(outPin, 0);
-		break;
-		case OUT_SOFT_PWM:
-		SoftPWMSet(outPin, 0);
-		break;
-		case OUT_DIGITAL:
-		//nothing to do
-		break;
-		default:
-		//error
-		break;		
-	}
-}
-void outputDefine::outputMode(int outPin, unsigned char modus, int fadeUpTime, int fadeDownTime){
-	pinMode(outPin, OUTPUT);
-	outPinModus = modus;
-	switch (modus) {
-		case OUT_SOFT_FADE:
-		SoftPWMSet(outPin, 0);     									//Create and set pin to 0
-		SoftPWMSetFadeTime(outPin, fadeUpTime, fadeDownTime);       //Set fade time for pin 1000 ms fade-up time, and 1000 ms fade-down time
-		break;
-		default:
-		//error
-		break;		
-	}
-}
-*/

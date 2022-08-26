@@ -17,37 +17,31 @@
  ************************************/
 #include "Arduino.h"
 #include "lightFunctions.h"
+#include "mapSwitchToFunctions.h" // get mapping from there
+#include "../config.h"
 
 
+// parkLightState = 0;
+// lowBeamLightState = 0;
+// highBeamLightState = 0;
+// highBeamLightFlashState = 0;
+// fogLightState = 0;
+// leftFlashLightState = 0;
+// RightFlashLightState = 0;
+// hazardLightState = 0;
+// beaconLightState = 0;
+// auxLightState = 0;
 
 void runLightFunctions() {
-	int vartest = 5;
-	vartest++;
-	bool sometest = (1 <= vartest);
-
-	parkLightState = 0;
-	lowBeamLightState = 0;
-	highBeamLightState = 0;
-bool fogLightState = 0;
-bool leftFlashLightState = 0;
-bool RightFlashLightState = 0;
-bool hazardLightState = 0;
-bool auxLightState = 0;
-
-	// channel1Poti[0] = ppmServoToRange(filter[0].filterValue(interrupt1Buffer[0]));
-	// channel1Poti[1] = ppmServoToRange(filter[1].filterValue(interrupt1Buffer[1]));
-	// channel1Switch[0] = ppmToSwitchStages(interrupt1Buffer[2]);
-	// channel1Switch[1] = ppmToSwitchStages(interrupt1Buffer[3]);
-	// channel1Switch[2] = ppmToSwitchStages(interrupt1Buffer[4]);
-	// channel1Switch[3] = ppmToSwitchStages(interrupt1Buffer[5]);
-	// channel1Switch[4] = ppmToSwitchStages(interrupt1Buffer[6]);
-	// channel1Switch[5] = ppmToSwitchStages(interrupt1Buffer[7]);
-	
-	// channel2Switch[0] = ppmToSwitchStages(interrupt2Buffer[0], PPM_INVERT);
-	// channel2Switch[1] = ppmToSwitchStages(interrupt2Buffer[1], PPM_INVERT);
-	// channel2Switch[2] = ppmToSwitchStages(interrupt2Buffer[2], PPM_INVERT);
-	// channel2Switch[3] = ppmToSwitchStages(interrupt2Buffer[3], PPM_INVERT);
-	// channel2Switch[4] = ppm2ToSwitch3Stages(interrupt2Buffer[4], interrupt2Buffer[5]);
-	// channel2Switch[5] = ppm2ToSwitch3Stages(interrupt2Buffer[6], interrupt2Buffer[7]);
-
+	parkLightOut = parkLightState;
+	lowBeamLightOut = lowBeamLightOut;
+	if(highBeamLightState) {
+		highBeamLightOut = true;
+	} else if(highBeamLightFlashState) {
+		highBeamLightOut = flasher[0].blink(HIGH_BEAM_FLASH_FREQUENCY);
+	} else {
+		highBeamLightOut = false;
+		flasher[0].resetBlink();
+	}
 }
+

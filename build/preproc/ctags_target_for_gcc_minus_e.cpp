@@ -103,6 +103,6 @@ void loop() { // put your main code here, to run repeatedly:
  if(!dynStatus) errorFlag = true;
  dynStatus = ppmChannel2Evaluation();
  if(!dynStatus) errorFlag = true;
- runLightFunctions();
+ runSwitchToFunction();
 
 }

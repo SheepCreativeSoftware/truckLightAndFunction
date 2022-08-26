@@ -29,7 +29,7 @@
 #include "modules/ppmToSwitches.h"				// Special functions
 #include "modules/readPPMdata.h"				// read Data from Buffer
 #include "modules/debugging.h"					// Handles debbuging info
-#include "modules/lightFunctions.h"
+#include "modules/mapSwitchToFunctions.h"
 
 
 
@@ -71,6 +71,6 @@ void loop() {                             // put your main code here, to run rep
 	if(!dynStatus) errorFlag = true;
 	dynStatus = ppmChannel2Evaluation();
 	if(!dynStatus) errorFlag = true;
-	runLightFunctions();
+	runSwitchToFunction();
 
 }

@@ -22,10 +22,12 @@
  /home/magraina/projects/truckLightAndFunction/build/sketch/modules/ppmToSwitches.cpp \
  /home/magraina/projects/truckLightAndFunction/build/sketch/modules/ppmToSwitches.h \
  /home/magraina/projects/truckLightAndFunction/build/sketch/modules/readPPMdata.h \
+ /home/magraina/projects/truckLightAndFunction/build/sketch/modules/tools.h \
+ /home/magraina/projects/truckLightAndFunction/build/sketch/modules/tools.cpp \
  /home/magraina/projects/truckLightAndFunction/build/sketch/modules/readPPMdata.cpp \
  /home/magraina/projects/truckLightAndFunction/build/sketch/modules/readPPMdata.h \
  /home/magraina/projects/truckLightAndFunction/build/sketch/modules/debugging.h \
  /home/magraina/projects/truckLightAndFunction/build/sketch/modules/debugging.cpp \
- /home/magraina/projects/truckLightAndFunction/build/sketch/modules/lightFunctions.h \
- /home/magraina/projects/truckLightAndFunction/build/sketch/modules/lightFunctions.cpp \
- /home/magraina/projects/truckLightAndFunction/build/sketch/modules/lightFunctions.h
+ /home/magraina/projects/truckLightAndFunction/build/sketch/modules/mapSwitchToFunctions.h \
+ /home/magraina/projects/truckLightAndFunction/build/sketch/modules/mapSwitchToFunctions.cpp \
+ /home/magraina/projects/truckLightAndFunction/build/sketch/modules/mapSwitchToFunctions.h

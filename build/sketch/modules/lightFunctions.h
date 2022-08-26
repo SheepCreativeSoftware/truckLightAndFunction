@@ -20,34 +20,22 @@
 #ifndef _LIGHT_FUNCTIONS_H_
 #define _LIGHT_FUNCTIONS_H_
 
-#define CON_NOT_EQUAL 0
-#define CON_EQUAL 1
-#define CON_LOWER 2
-#define CON_GREATHER 3
-#define CON_EQUAL_LOWER 4
-#define CON_EQUAL_GREATHER 5
+#include "tools.h" // Get blink class from
 
-bool parkLightState = 0;
-bool lowBeamLightState = 0;
-bool highBeamLightState = 0;
-bool fogLightState = 0;
-bool leftFlashLightState = 0;
-bool RightFlashLightState = 0;
-bool hazardLightState = 0;
-bool auxLightState = 0;
-
-bool setIfCondition(uint8_t state, uint8_t condition, uint8_t comparator);
-void setParkLight(uint8_t state, uint8_t condition);
-void setLowBeamLight(uint8_t state, uint8_t condition);
-void setHighBeamLight(uint8_t state, uint8_t condition);
-void setFogLight(uint8_t state, uint8_t condition);
-void setLeftFlashLight(uint8_t state, uint8_t condition);
-void setRightFlashLight(uint8_t state, uint8_t condition);
-void setHazardLight(uint8_t state, uint8_t condition);
-void setAux1Light(uint8_t state, uint8_t condition);
+bool parkLightOut = 0;
+bool lowBeamLightOut = 0;
+bool highBeamLightOut = 0;
+bool highBeamLightFlashOut = 0;
+bool fogLightOut = 0;
+bool leftFlashLightOut = 0;
+bool rightFlashLightOut = 0;
+bool hazardLightOut = 0;
+bool beaconLightOut = 0;
+bool auxLightOut = 0;
 
 void runLightFunctions();
 
+Blink flasher[2];
 
 #include "lightFunctions.cpp"
 #endif

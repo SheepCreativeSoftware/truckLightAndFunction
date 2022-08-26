@@ -22,6 +22,8 @@
 
 #define COUNTRY_OPTION "EU"					//Setup Region EU or US for Truck
 #define HEADLIGHT_COMBINE false				//High => Low and High Beam on both Head Light output Pins | False => Seperate Pins for High and Low Beam 
+#define HIGH_BEAM_FLASH_FREQUENCY 500		// Time frequency for head beam to flash
+#define FLASHER_FLASH_FREQUENCY 1000		// Time frequency for Flasher to flash
 #define SERIAL_COM false					//Activate Communication to other modules via Serial Port
 #if (SERIAL_COM == true)
 	#define TRUCK_ADDRESS 1					//Serial Adress for this Module: Truck

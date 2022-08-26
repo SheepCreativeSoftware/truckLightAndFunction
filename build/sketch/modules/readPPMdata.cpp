@@ -77,14 +77,14 @@ void ppmServoInterrupt(){
 }
 
 bool ppmChannel1Evaluation() {
-	// 16:59:31.637 -> 1504 	row below:	1 Poti (0-100% -> 1000-2000)
+	// 16:59:31.637 -> 1504 row below:	1 Poti (0-100% -> 1000-2000)
 	// 16:59:31.637 -> 1568	row below:	2 Poti (0-100% -> 1000-2000)
 	// 16:59:31.637 -> 1516	row below:	3 switch (up/mid/down 1000/1500/2000)
 	// 16:59:31.637 -> 1528	row below: 	4 switch (up/mid/down 1000/1500/2000)
-	// 16:59:31.637 -> 1508	row below:		1 button (up/mid/down 1000/1500/2000)
-	// 16:59:31.637 -> 1532	row below:		2 switch (up/mid/down 1000/1500/2000)
-	// 16:59:31.637 -> 1532	row below:		3 switch (up/mid/down 1000/1500/2000)
-	// 16:59:31.637 -> 1528	row below:		4 button/switch (up/mid/down 1000/1500/2000)
+	// 16:59:31.637 -> 1508	row above:		1 button (up/mid/down 1000/1500/2000)
+	// 16:59:31.637 -> 1532	row above:		2 switch (up/mid/down 1000/1500/2000)
+	// 16:59:31.637 -> 1532	row above:		3 switch (up/mid/down 1000/1500/2000)
+	// 16:59:31.637 -> 1528	row above:		4 button/switch (up/mid/down 1000/1500/2000)
 
 	if((millis()-interrupt1LastValidMillis) >= maxTimeForInterrupt) {
 		for(uint8_t i = 0; i < 8; i++) {
@@ -105,10 +105,10 @@ bool ppmChannel1Evaluation() {
 }
 
 bool ppmChannel2Evaluation() {
-	// 16:59:31.637 -> 1976	row below:		4 button (up/down 2000/1000)
-	// 16:59:31.637 -> 1984	row below:		3 switch (up/down 2000/1000)
-	// 16:59:31.637 -> 1980	row below:		2 switch (up/down 2000/1000)
-	// 16:59:31.637 -> 1980	row below:		1 switch (up/down 2000/1000)
+	// 16:59:31.637 -> 1976	row above:		4 button (up/down 2000/1000)
+	// 16:59:31.637 -> 1984	row above:		3 switch (up/down 2000/1000)
+	// 16:59:31.637 -> 1980	row above:		2 switch (up/down 2000/1000)
+	// 16:59:31.637 -> 1980	row above:		1 switch (up/down 2000/1000)
 	// 16:59:31.637 -> 1696	row below:	2 switch (up/mid/down 1000/1700/1700)
 	// 16:59:31.637 -> 1716	row below:	2 switch (up/mid/down 1700/1700/1000)
 	// 16:59:31.637 -> 1692	row below:	1 switch (up/mid/down 1000/1700/1700)

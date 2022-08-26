@@ -19,7 +19,7 @@
 #ifndef _READ_PPM_DATA_H_
 #define _READ_PPM_DATA_H_
 
-#include "ppmToSwitches.h"
+#include "tools.h" // get filter class from there
 
 #define INTERRUPT_BUFFERSIZE 8								// Max Buffersize of ISR; Max is 255
 #define PPM_START_MIN 850									// Minimun for start impuls
