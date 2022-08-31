@@ -1,5 +1,5 @@
 /************************************ 
- * Simple SerialBus Slave Interface v0.0.1
+ * Simple SerialBus Master Interface v0.0.1
  * Date: 30.08.2022 | 21:52
  * <Truck Light and function module>
  * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
