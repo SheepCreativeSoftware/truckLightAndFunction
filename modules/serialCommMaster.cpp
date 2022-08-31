@@ -1,5 +1,5 @@
 /************************************ 
- * Simple SerialBus Master Interface v0.0.1
+ * Simple SerialBus Slave Interface v0.0.1
  * Date: 30.08.2022 | 21:52
  * <Truck Light and function module>
  * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
@@ -16,19 +16,37 @@
  * If not, see <https://www.gnu.org/licenses/>.
  ************************************/
 #include "Arduino.h"
-#include "serialCommSlave.h"
+#include "serialCommMaster.h"
 #include "HardwareSerial.h"
 
+// state machine states
+#define IDLE 1
+#define WAITING_FOR_REPLY 2
+#define WAITING_FOR_TURNAROUND 3
+#define BUFFER_SIZE 64
 
+#define FUNC_LIGHT_DATA 1
+#define FUNC_SERVO 2
+
+uint8_t state;
+uint8_t sendState;
+uint32_t timeout; // timeout interval
+uint32_t polling; // turnaround delay interval
+uint16_t frameDelay; // frame time out in microseconds
+uint32_t delayStart; // init variable for turnaround and timeout delay
 
 void serialConfigure(HardwareSerial *_SerialPort,	// Serial interface on arduino
 					uint32_t baud,						// Baudrate
 					uint8_t byteFormat,		// e.g. SERIAL_8N1 | start bit, data bit, stop bit
+					long _timeout, 
+					long _polling, 
 					uint8_t _slaveID,			// Address of this device
 					uint8_t _TxEnablePin,		// Pin to switch between Transmit and Receive
 ) {
 	SerialPort = _SerialPort;						// Store on a global var
 	(*SerialPort).begin(baud, byteFormat);			// Init communication port
+	timeout = _timeout;
+	polling = _polling;
 	slaveID = _slaveID;								// Store on a global var for other functions
 	TxEnablePin = _TxEnablePin;						// Store on a global var for other functions
 	pinMode(TxEnablePin, OUTPUT);
@@ -37,69 +55,33 @@ void serialConfigure(HardwareSerial *_SerialPort,	// Serial interface on arduino
 } 
 
 uint16_t serialUpdate() {
-
-	if ((*SerialPort).available()) {
-		uint8_t buffer = 0;
-		bool overflow = 0;
-
-		while ((*SerialPort).available()) {
-			// If more bytes is received than the BUFFER_SIZE the overflow flag will be set and the 
-			// serial buffer will be red untill all the data is cleared from the receive buffer.
-			if (overflow) {
-				(*SerialPort).read();
-			} else {
-				if (buffer == BUFFER_SIZE) overflow = true;
-				frame[buffer] = (*SerialPort).read();
-				buffer++;
-			}
-		//delayMicroseconds(T1_5); // inter character time out?
-		}
-		
-		// If an overflow occurred increment the errorCount
-		if (overflow) return errorCount++;
-
-		if (buffer >= MIN_BUFFER_SIZE) {
-
-			uint8_t id = frame[0];
-			bool broadcastFlag = false;
-
-			if(id == BROADCAST_ADDRESS) broadcastFlag = true;
-
-			if(id == slaveID || broadcastFlag) {
-				uint16_t crc16 = ((frame[buffer - 2] << 8) | frame[buffer - 1]);	// combine the crc Low & High bytes
-
-				// if the calculated crc matches the recieved crc continue
-				if (calculateCRC(buffer - 2) == crc16) {
-					function = frame[1];
-
-					// Function 1 is Light information data which has only one byte
-					/* 	0 -> parking light,
-						1 -> brake light,
-						2 -> reversing lights,
-						3 -> warnblinker,
-						4 -> right blinker,
-						5 -> left blinker,
-						6 -> auxiliary light,
-						7 -> beacon light
-					*/
-					if(function == FUNC_LIGHT_DATA) { 
-						lightDataFromSerial = frame[2];
-					} else if (function == FUNC_SERVO) {
-						servoMicrosFromSerial[0] = ((frame[2] << 8) | frame[3]); // combine the servo bytes
-						servoMicrosFromSerial[1] = ((frame[4] << 8) | frame[5]); // combine the servo bytes
-					}
-
-				} else {
-					// CRC Check failed
-					errorCount++;
-				}
-			}
-
-		} else if (buffer > BUFFER_EMPTY && buffer < MIN_BUFFER_SIZE) {
-			errorCount++; // corrupted packet
-		}
+	switch (state) {
+		case IDLE:
+			idle();
+		break;
+		case WAITING_FOR_REPLY:
+			waitingForReply();
+		break;
+		case WAITING_FOR_TURNAROUND:
+			waitingForTurnaround();
+		break;
 	}
-	return errorCount;
+	
+}
+
+void idle() {
+	switch (sendState) {
+		case FUNC_LIGHT_DATA:
+			constructPacket(FUNC_LIGHT_DATA, data);
+		break;
+		case FUNC_SERVO:
+			constructPacket(FUNC_SERVO, data, data2);
+		break;
+	}
+}
+
+void waitingForTurnaround() {
+	if ((millis() - delayStart) > polling) state = IDLE;
 }
 
 uint16_t calculateCRC(uint8_t bufferSize) {
@@ -116,4 +98,19 @@ uint16_t calculateCRC(uint8_t bufferSize) {
 		}
 	}
 	return crc16; 																	// The final content of the CRC register is the CRC value
+}
+
+void sendPacket(unsigned char bufferSize) {
+	digitalWrite(TxEnablePin, HIGH);
+		
+	for (unsigned char i = 0; i < bufferSize; i++) {
+		(*SerialPort).write(frame[i]);
+	}
+	(*SerialPort).flush();
+	
+	//delayMicroseconds(frameDelay);
+	
+	digitalWrite(TxEnablePin, LOW);
+		
+	delayStart = millis(); // start the timeout delay	
 }
