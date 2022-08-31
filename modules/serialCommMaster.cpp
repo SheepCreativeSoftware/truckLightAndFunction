@@ -41,7 +41,7 @@ void serialConfigure(HardwareSerial *_SerialPort,	// Serial interface on arduino
 					long _timeout, 
 					long _polling, 
 					uint8_t _slaveID,			// Address of this device
-					uint8_t _TxEnablePin,		// Pin to switch between Transmit and Receive
+					uint8_t _TxEnablePin		// Pin to switch between Transmit and Receive
 ) {
 	SerialPort = _SerialPort;						// Store on a global var
 	(*SerialPort).begin(baud, byteFormat);			// Init communication port
@@ -60,7 +60,7 @@ uint16_t serialUpdate() {
 			idle();
 		break;
 		case WAITING_FOR_REPLY:
-			waitingForReply();
+			//waitingForReply();
 		break;
 		case WAITING_FOR_TURNAROUND:
 			waitingForTurnaround();
@@ -70,14 +70,19 @@ uint16_t serialUpdate() {
 }
 
 void idle() {
+	uint16_t data, data2;
 	switch (sendState) {
 		case FUNC_LIGHT_DATA:
-			constructPacket(FUNC_LIGHT_DATA, data);
+			constructPacket(FUNC_LIGHT_DATA, data, 0);
 		break;
 		case FUNC_SERVO:
 			constructPacket(FUNC_SERVO, data, data2);
 		break;
 	}
+}
+
+void constructPacket(uint8_t function, uint16_t data, uint16_t data2) {
+
 }
 
 void waitingForTurnaround() {

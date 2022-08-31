@@ -46,7 +46,7 @@ void serialConfigure(HardwareSerial *_SerialPort,	// Serial interface on arduino
 					uint32_t baud,						// Baudrate
 					uint8_t byteFormat,		// e.g. SERIAL_8N1 | start bit, data bit, stop bit
 					uint8_t _slaveID,			// Address of this device
-					uint8_t _TxEnablePin,		// Pin to switch between Transmit and Receive
+					uint8_t _TxEnablePin		// Pin to switch between Transmit and Receive
 );
 
 #include "serialCommSlave.cpp"

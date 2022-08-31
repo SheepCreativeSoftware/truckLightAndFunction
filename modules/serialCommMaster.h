@@ -41,13 +41,16 @@ HardwareSerial* SerialPort;
 uint8_t lightDataFromSerial;
 uint16_t servoMicrosFromSerial[2];
 
-uint16_t serialUpdate();
 void serialConfigure(HardwareSerial *_SerialPort,	// Serial interface on arduino
 					uint32_t baud,						// Baudrate
 					uint8_t byteFormat,		// e.g. SERIAL_8N1 | start bit, data bit, stop bit
+					long _timeout, 
+					long _polling, 
 					uint8_t _slaveID,			// Address of this device
-					uint8_t _TxEnablePin,		// Pin to switch between Transmit and Receive
-);
+					uint8_t _TxEnablePin		// Pin to switch between Transmit and Receive
+) ;
+void waitingForTurnaround();
+void constructPacket(uint8_t function, uint16_t data, uint16_t data2);
 
 #include "serialCommMaster.cpp"
 #endif

@@ -17,15 +17,12 @@
  ************************************/
 #include "Arduino.h"
 #include "serialCommSlave.h"
-#include "HardwareSerial.h"
-
-
 
 void serialConfigure(HardwareSerial *_SerialPort,	// Serial interface on arduino
 					uint32_t baud,						// Baudrate
 					uint8_t byteFormat,		// e.g. SERIAL_8N1 | start bit, data bit, stop bit
 					uint8_t _slaveID,			// Address of this device
-					uint8_t _TxEnablePin,		// Pin to switch between Transmit and Receive
+					uint8_t _TxEnablePin		// Pin to switch between Transmit and Receive
 ) {
 	SerialPort = _SerialPort;						// Store on a global var
 	(*SerialPort).begin(baud, byteFormat);			// Init communication port
@@ -70,7 +67,7 @@ uint16_t serialUpdate() {
 
 				// if the calculated crc matches the recieved crc continue
 				if (calculateCRC(buffer - 2) == crc16) {
-					function = frame[1];
+					uint8_t function = frame[1];
 
 					// Function 1 is Light information data which has only one byte
 					/* 	0 -> parking light,
