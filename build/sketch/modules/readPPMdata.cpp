@@ -18,6 +18,7 @@
  ************************************/
 #include "Arduino.h"
 #include "readPPMdata.h"
+#include "readPPMdata.h"
 
 /***************************************************
  * PPM Signal have a range from 1000ms to 2000ms
@@ -28,7 +29,7 @@
 void initInterrupts(uint8_t pinPPMChannel1, uint8_t pinPPMChannel2, uint8_t pinServoChannel) {
 	attachInterrupt(digitalPinToInterrupt(pinPPMChannel1), ppmMultiInterrupt1, CHANGE); 	//Setup Interrupt
 	attachInterrupt(digitalPinToInterrupt(pinPPMChannel2), ppmMultiInterrupt2, CHANGE);		//Setup Interrupt
-	attachInterrupt(digitalPinToInterrupt(pinServoChannel), ppmServoInterrupt, CHANGE);		//Setup Interrupt
+	//attachInterrupt(digitalPinToInterrupt(pinServoChannel), ppmServoInterrupt, CHANGE);		//Setup Interrupt
 }
 
 void ppmMultiInterrupt1(){

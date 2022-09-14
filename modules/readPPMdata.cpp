@@ -17,6 +17,7 @@
  ************************************/
 #include "Arduino.h"
 #include "readPPMdata.h"
+#include "readPPMdata.h"
 
 /***************************************************
  * PPM Signal have a range from 1000ms to 2000ms
@@ -27,41 +28,38 @@
 void initInterrupts(uint8_t pinPPMChannel1, uint8_t pinPPMChannel2, uint8_t pinServoChannel) {
 	attachInterrupt(digitalPinToInterrupt(pinPPMChannel1), ppmMultiInterrupt1, CHANGE); 	//Setup Interrupt
 	attachInterrupt(digitalPinToInterrupt(pinPPMChannel2), ppmMultiInterrupt2, CHANGE);		//Setup Interrupt
-	attachInterrupt(digitalPinToInterrupt(pinServoChannel), ppmServoInterrupt, CHANGE);		//Setup Interrupt
+	//attachInterrupt(digitalPinToInterrupt(pinServoChannel), ppmServoInterrupt, CHANGE);		//Setup Interrupt
 }
 
 void ppmMultiInterrupt1(){
 	volatile uint32_t nMicros = micros(); 							//Store current time
 	volatile uint32_t nDifference = (nMicros - interrrupt1LastMicros); //Calc time since last Change
+	if((nDifference > (int)PPM_HIGH_MIN) && (nDifference < (int)PPM_HIGH_MAX)) { 		//Filter HIGH Impulse | HIGH if time is between 700 and 2200 
+		if((nDifference > (int)PPM_START_MIN) && (nDifference < (int)PPM_START_MAX)) { 				//if time is ~915 then this is the start impulse
+			interrupt1Position = 0; 									//then set index to 0
+		} else if(interrupt1Position < INTERRUPT_BUFFERSIZE) {					//if index is out of bound, then wait for next start impulse
+			interrupt1Buffer[interrupt1Position] = nDifference;			//save current time difference to value
+			interrupt1Position++; 										//increment index by one
+			interrupt1LastValidMillis = millis();						//save time of the last valid signal
+		}
+	}
 	interrrupt1LastMicros = nMicros;								//save time for next interrupt
-	if((nDifference < PPM_HIGH_MIN) && (nDifference > PPM_HIGH_MAX)) return; 		//Filter HIGH Impulse | HIGH if time is between 700 and 2200 else return
-	if((nDifference > PPM_START_MIN) && (nDifference < PPM_START_MAX)) { 				//if time is ~915 then this is the start impulse
-		interrupt1Position = 0; 									//then set index to 0
-		return;														// And wait for the next impulse
-	}
-	if(interrupt1Position < INTERRUPT_BUFFERSIZE) {					//if index is out of bound, then wait for next start impulse
-		interrupt1Buffer[interrupt1Position] = nDifference;			//save current time difference to value
-		interrupt1Position++; 										//increment index by one
-		interrupt1LastValidMillis = millis();						//save time of the last valid signal
-	}
-	return;
 }
 
 void ppmMultiInterrupt2(){
 	volatile uint32_t nMicros = micros(); 							//Store current time
-	volatile uint32_t nDifference = (nMicros - interrrupt1LastMicros); //Calc time since last Change
-	interrrupt1LastMicros = nMicros;								//save time for next interrupt
-	if((nDifference < PPM_HIGH_MIN) && (nDifference > PPM_HIGH_MAX)) return; 		//Filter HIGH Impulse | HIGH if time is between 700 and 2200 else return
-	if((nDifference > PPM_START_MIN) && (nDifference < PPM_START_MAX)) { 				//if time is ~915 then this is the start impulse
-		interrupt2Position = 0; 									//then set index to 0
-		return;														// And wait for the next impulse
+	volatile uint32_t nDifference = (nMicros - interrrupt2LastMicros); //Calc time since last Change
+	if((nDifference > (int)PPM_HIGH_MIN) && (nDifference < (int)PPM_HIGH_MAX)) {		//Filter HIGH Impulse | HIGH if time is between 700 and 2200 else return
+		if((nDifference > (int)PPM_START_MIN) && (nDifference < (int)PPM_START_MAX)) { 				//if time is ~915 then this is the start impulse
+			interrupt2Position = 0; 									//then set index to 0
+			return;														// And wait for the next impulse
+		} else	if(interrupt2Position < INTERRUPT_BUFFERSIZE) {					//if index is out of bound, then wait for next start impulse
+			interrupt2Buffer[interrupt2Position] = nDifference;			//save current time difference to value
+			interrupt2Position++; 										//increment index by one
+			interrupt2LastValidMillis = millis();						//save time of the last valid signal
+		}
 	}
-	if(interrupt2Position < INTERRUPT_BUFFERSIZE) {					//if index is out of bound, then wait for next start impulse
-		interrupt2Buffer[interrupt2Position] = nDifference;			//save current time difference to value
-		interrupt2Position++; 										//increment index by one
-		interrupt2LastValidMillis = millis();						//save time of the last valid signal
-	}
-	return;
+	interrrupt2LastMicros = nMicros;								//save time for next interrupt
 }
 
 

@@ -32,14 +32,15 @@
 #include "modules/readPPMdata.h"				// read Data from Buffer
 #include "modules/debugging.h"					// Handles debbuging info
 #include "modules/mapSwitchToFunctions.h"
+#include "modules/debugging.h"
 
 
 
-#line 36 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+#line 37 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
 void setup();
-#line 67 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+#line 69 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
 void loop();
-#line 36 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+#line 37 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
 void setup() {
 	SoftPWMBegin();
 	// put your setup code here, to run once:
@@ -69,6 +70,7 @@ void setup() {
 	* Setup Functions
 	************************************/
 	initInterrupts(inFunction1ControlPPM, inFunction2ControlPPM, inSteerControlPPM);
+	debuggingInit();
 }
 
 void loop() {                             // put your main code here, to run repeatedly:
@@ -79,5 +81,6 @@ void loop() {                             // put your main code here, to run rep
 	dynStatus = ppmChannel2Evaluation();
 	if(!dynStatus) errorFlag = true;
 	runSwitchToFunction();
+	runDiagnostic();
 
 }

@@ -53,6 +53,7 @@
 # 31 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino" 2
 # 32 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino" 2
 # 33 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino" 2
+# 34 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino" 2
 
 
 
@@ -64,7 +65,7 @@ void setup() {
 	* Setup Inputs 
 
 	************************************/
-# 42 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+# 43 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
  pinMode(2 /*PPM Signal from Remote Control Extension | Interrupt Needed*/, 0x2);
  pinMode(3 /*PPM Signal from Remote Control Extension | Interrupt Needed*/, 0x2);
  pinMode(7 /*Steering Servo Signal from Receiver  | Interrupt Needed*/, 0x2);
@@ -75,7 +76,7 @@ void setup() {
 	* Setup Outputs 
 
 	************************************/
-# 50 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+# 51 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
  pinMode(A0 /*Parking light output pin*/, 0x1);
  pinMode(10 /*Head light low beam output pin | PWM*/, 0x1);
  pinMode(11 /*Head light high beam output pin*/, 0x1);
@@ -92,8 +93,9 @@ void setup() {
 	* Setup Functions
 
 	************************************/
-# 64 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+# 65 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
  initInterrupts(2 /*PPM Signal from Remote Control Extension | Interrupt Needed*/, 3 /*PPM Signal from Remote Control Extension | Interrupt Needed*/, 7 /*Steering Servo Signal from Receiver  | Interrupt Needed*/);
+ debuggingInit();
 }
 
 void loop() { // put your main code here, to run repeatedly:
@@ -104,5 +106,6 @@ void loop() { // put your main code here, to run repeatedly:
  dynStatus = ppmChannel2Evaluation();
  if(!dynStatus) errorFlag = true;
  runSwitchToFunction();
+ runDiagnostic();
 
 }

@@ -32,6 +32,6 @@
 	#define EXT_FUNC_ADDRESS 4				//Serial Adress for Module: Special function for example Servos Steering
 #endif
 //Change this value for different debuging levels
-#define DEBUGLEVEL 3						//1 = Status LED | >2 = Serial Monitor
+#define DEBUGLEVEL 6						//1 = Status LED | >2 = Serial Monitor
 
 #endif

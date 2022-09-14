@@ -30,6 +30,7 @@
 #include "modules/readPPMdata.h"				// read Data from Buffer
 #include "modules/debugging.h"					// Handles debbuging info
 #include "modules/mapSwitchToFunctions.h"
+#include "modules/debugging.h"
 
 
 
@@ -62,15 +63,17 @@ void setup() {
 	* Setup Functions
 	************************************/
 	initInterrupts(inFunction1ControlPPM, inFunction2ControlPPM, inSteerControlPPM);
+	debuggingInit();
 }
 
 void loop() {                             // put your main code here, to run repeatedly:
 	bool errorFlag = false;
 	
 	bool dynStatus = ppmChannel1Evaluation();
-	if(!dynStatus) errorFlag = true;
+	//if(!dynStatus) errorFlag = true;
 	dynStatus = ppmChannel2Evaluation();
-	if(!dynStatus) errorFlag = true;
-	runSwitchToFunction();
+	//if(!dynStatus) errorFlag = true;
+	//runSwitchToFunction();
+	runDiagnostic();
 
 }
