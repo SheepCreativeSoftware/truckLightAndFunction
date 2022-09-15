@@ -1,7 +1,4 @@
 /************************************ 
- * truckLightAndFunction v0.0.11
- * Date: 10.06.2020 | 00:25
- * <Truck Light and function module>
  * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
  * This program is free software: you can redistribute it and/or modify it 
@@ -15,10 +12,32 @@
  * You should have received a copy of the GNU General Public License along with this program. 
  * If not, see <https://www.gnu.org/licenses/>.
  ************************************/
-#include "Arduino.h"
-#include "mapSwitchToFunctions.h"
-#include "readPPMdata.h" // Get Channel vars from there
 
+#include "mapSwitchToFunctions.h"
+
+#ifndef DIRECTION_UP
+	#define DIRECTION_UP 1
+#endif
+#ifndef DIRECTION_MID
+	#define DIRECTION_MID 2
+#endif
+#ifndef DIRECTION_DOWN
+	#define DIRECTION_DOWN 3
+#endif
+
+//declare vars
+bool parkLightState = 0;
+bool lowBeamLightState = 0;
+bool highBeamLightState = 0;
+bool highBeamLightFlashState = 0;
+bool fogLightState = 0;
+bool leftFlashLightState = 0;
+bool RightFlashLightState = 0;
+bool hazardLightState = 0;
+bool beaconLightState = 0;
+bool auxLightState = 0;
+
+//declare classes
 
 
 void runSwitchToFunction() {

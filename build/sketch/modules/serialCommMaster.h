@@ -53,5 +53,4 @@ void serialConfigure(HardwareSerial *_SerialPort,	// Serial interface on arduino
 void waitingForTurnaround();
 void constructPacket(uint8_t function, uint16_t data, uint16_t data2);
 
-#include "serialCommMaster.cpp"
 #endif

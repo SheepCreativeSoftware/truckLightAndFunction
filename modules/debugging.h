@@ -1,8 +1,5 @@
 /************************************ 
- * truckLightAndFunction v0.1.0
- * Date: 2022-08-18T19:48:28Z
- * <Truck Light and function module>
- * Copyright (C) 2020 Marina Egner <info@sheepCreativeStudios.de>
+ * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
  * This program is free software: you can redistribute it and/or modify it 
  * under the terms of the GNU General Public License as published by the 
@@ -19,6 +16,7 @@
 #ifndef _DEBBUGING_H_
 #define _DEBBUGING_H_
 #include "Arduino.h"
+#include "readPPMdata.h"
 
 #ifndef DEBUGLEVEL
 #define DEBUGLEVEL 0
@@ -49,5 +47,4 @@ void debugInterrupt();					//function to debug the interrupt data
 void debugChannelEvaluation();
 void runDiagnostic();
 
-#include "debugging.cpp"
 #endif

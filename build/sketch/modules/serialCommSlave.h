@@ -50,5 +50,4 @@ void serialConfigure(HardwareSerial *_SerialPort,	// Serial interface on arduino
 					uint8_t _TxEnablePin		// Pin to switch between Transmit and Receive
 );
 
-#include "serialCommSlave.cpp"
 #endif

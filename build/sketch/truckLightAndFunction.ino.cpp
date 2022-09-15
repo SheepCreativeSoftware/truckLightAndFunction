@@ -27,22 +27,23 @@
 /************************************
  * Include Module and Library Files
  ************************************/
-#include <SoftPWM.h>							// https://github.com/bhagman/SoftPWM
-#include "modules/ppmToSwitches.h"				// Special functions
-#include "modules/readPPMdata.h"				// read Data from Buffer
-#include "modules/debugging.h"					// Handles debbuging info
-#include "modules/mapSwitchToFunctions.h"
-#include "modules/debugging.h"
+#include "readPPMdata.h"				// read Data from Buffer
+//#include <SoftPWM.h>							// https://github.com/bhagman/SoftPWM
+//#include "debugging.h"					// Handles debbuging info
+
+//#include "ppmToSwitches.h"				// Special functions
+//#include "mapSwitchToFunctions.h"
+//#include "tools.h"
 
 
 
-#line 37 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+#line 38 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
 void setup();
-#line 69 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+#line 70 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
 void loop();
-#line 37 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+#line 38 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
 void setup() {
-	SoftPWMBegin();
+	//SoftPWMBegin();
 	// put your setup code here, to run once:
 	/************************************
 	* Setup Inputs 
@@ -70,17 +71,21 @@ void setup() {
 	* Setup Functions
 	************************************/
 	initInterrupts(inFunction1ControlPPM, inFunction2ControlPPM, inSteerControlPPM);
-	debuggingInit();
+	//debuggingInit();
 }
 
 void loop() {                             // put your main code here, to run repeatedly:
 	bool errorFlag = false;
 	
-	bool dynStatus = ppmChannel1Evaluation();
-	if(!dynStatus) errorFlag = true;
-	dynStatus = ppmChannel2Evaluation();
-	if(!dynStatus) errorFlag = true;
-	runSwitchToFunction();
-	runDiagnostic();
+	// 16:59:31.637 -> 1504 row below:	1 Poti (0-100% -> 1000-2000)
+// 16:59:31.637 -> 1568	row below:	2 Poti (0-100% -> 1000-2000)
+// 16:59:31.637 -> 1516	row below:	3 switch (up/mid/down 1000/1500/2000)
+// 16:59:31.637 -> 1528	row below: 	4 switch (up/mid/down 1000/1500/2000)
+// 16:59:31.637 -> 1508	row above:		1 button (up/mid/down 1000/1500/2000)
+// 16:59:31.637 -> 1532	row above:		2 switch (up/mid/down 1000/1500/2000)
+// 16:59:31.637 -> 1532	row above:		3 switch (up/mid/down 1000/1500/2000)
+// 16:59:31.637 -> 1528	row above:		4 button/switch (up/mid/down 1000/1500/2000)
+
+	//getChannel1Switch( channel,  fallbackValue);
 
 }

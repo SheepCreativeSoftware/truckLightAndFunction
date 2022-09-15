@@ -1,9 +1,6 @@
 #line 1 "/home/magraina/projects/truckLightAndFunction/globalVars.h"
 /************************************ 
- * truckLightAndFunction v0.1.0
- * Date: 2022-08-18T19:48:28Z
- * <Truck Light and function module>
- * Copyright (C) 2020 Marina Egner <info@sheepCreativeStudios.de>
+ * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
  * This program is free software: you can redistribute it and/or modify it 
  * under the terms of the GNU General Public License as published by the 

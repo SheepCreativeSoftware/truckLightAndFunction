@@ -1,8 +1,5 @@
 #line 1 "/home/magraina/projects/truckLightAndFunction/modules/debugging.cpp"
 /************************************ 
- * truckLightAndFunction v0.0.11
- * Date: 10.06.2020 | 00:25
- * <Truck Light and function module>
  * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
  * This program is free software: you can redistribute it and/or modify it 
@@ -26,7 +23,7 @@ void debuggingInit() {
 	#endif
 }
 
-#if (DEBUGLEVEL >=9)
+#if (DEBUGLEVEL ==9)
 bool controllerStatus(bool errorFlag) {
 	if(errorFlag) {
 		return true;
@@ -43,7 +40,7 @@ bool controllerStatus(bool errorFlag) {
 }
 #endif
 
-#if (DEBUGLEVEL >=6)
+#if (DEBUGLEVEL ==6)
 void debugInterrupt() {
 	if((millis()%1000 >= 500) && (serialIsSent == false)) {
 		SerialUSB.println("--Multiswitch 1--");
@@ -72,7 +69,7 @@ void debugInterrupt() {
 	}
 }
 #endif
-#if (DEBUGLEVEL >=3)
+#if (DEBUGLEVEL ==3)
 void debugChannelEvaluation() {
 	if((millis()%1000 >= 500) && (serialIsSent2 == false)) {
 		SerialUSB.println("--Channelswitch 1--");
@@ -100,30 +97,28 @@ void debugChannelEvaluation() {
 }
 #endif
 
-#if (DEBUGLEVEL >=1)
 void runDiagnostic() {
 	#if (DEBUGLEVEL >=1)
 
 	#endif
 
-	#if (DEBUGLEVEL >=2)
+	#if (DEBUGLEVEL ==2)
 
 	#endif
 
-	#if (DEBUGLEVEL >=3)
+	#if (DEBUGLEVEL ==3)
 		debugChannelEvaluation();
 	#endif
 
-	#if (DEBUGLEVEL >=4)
+	#if (DEBUGLEVEL ==4)
 
 	#endif
 
-	#if (DEBUGLEVEL >=5)
+	#if (DEBUGLEVEL ==5)
 
 	#endif
 
-	#if (DEBUGLEVEL >=6)
+	#if (DEBUGLEVEL ==6)
 		debugInterrupt();
 	#endif
 }
-#endif

@@ -1,8 +1,5 @@
 /************************************ 
- * truckLightAndFunction v0.1.0
- * Date: 2022-08-18T19:48:28Z
- * <Truck Light and function module>
- * Copyright (C) 2020 Marina Egner <info@sheepCreativeStudios.de>
+ * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
  * This program is free software: you can redistribute it and/or modify it 
  * under the terms of the GNU General Public License as published by the 
@@ -19,37 +16,9 @@
 #ifndef _MAP_SWITCH_TO_FUNCTIONS_H_
 #define _MAP_SWITCH_TO_FUNCTIONS_H_
 
-// Include for edge class
-#include "tools.h"
-
-#ifndef DIRECTION_UP
-	#define DIRECTION_UP 1
-#endif
-#ifndef DIRECTION_MID
-	#define DIRECTION_MID 2
-#endif
-#ifndef DIRECTION_DOWN
-	#define DIRECTION_DOWN 3
-#endif
-
-//declare vars
-bool parkLightState = 0;
-bool lowBeamLightState = 0;
-bool highBeamLightState = 0;
-bool highBeamLightFlashState = 0;
-bool fogLightState = 0;
-bool leftFlashLightState = 0;
-bool RightFlashLightState = 0;
-bool hazardLightState = 0;
-bool beaconLightState = 0;
-bool auxLightState = 0;
+#include "Arduino.h"
 
 //declare fuctions
 void runSwitchToFunction();
 
-//declare classes
-EdgeEvaluation edgeEval[2];
-
-
-#include "mapSwitchToFunctions.cpp"
 #endif

@@ -1,7 +1,4 @@
 /************************************ 
- * truckLightAndFunction v0.0.11
- * Date: 10.06.2020 | 00:25
- * <Truck Light and function module>
  * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
  * This program is free software: you can redistribute it and/or modify it 
@@ -99,7 +96,6 @@ void debugChannelEvaluation() {
 }
 #endif
 
-#if (DEBUGLEVEL >=1)
 void runDiagnostic() {
 	#if (DEBUGLEVEL >=1)
 
@@ -125,4 +121,3 @@ void runDiagnostic() {
 		debugInterrupt();
 	#endif
 }
-#endif

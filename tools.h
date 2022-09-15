@@ -1,8 +1,4 @@
-#line 1 "/home/magraina/projects/truckLightAndFunction/modules/tools.h"
 /************************************ 
- * truckLightAndFunction v0.0.11
- * Date: 10.06.2020 | 00:25
- * <Truck Light and function module>
  * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
  * This program is free software: you can redistribute it and/or modify it 
@@ -20,6 +16,9 @@
 #ifndef _TOOLS_H_
 #define _TOOLS_H_
 //Definition
+#include "Arduino.h"
+#include <SoftPWM.h>							//https://github.com/bhagman/SoftPWM
+
 
 //Classes
 class EdgeEvaluation {
@@ -54,5 +53,4 @@ class outputDefine {
 //Modus pwmHW softPWM softFade digital
 */
 
-#include "tools.cpp"
 #endif

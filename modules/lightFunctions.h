@@ -1,8 +1,5 @@
 /************************************ 
- * truckLightAndFunction v0.1.0
- * Date: 2022-08-18T19:48:28Z
- * <Truck Light and function module>
- * Copyright (C) 2020 Marina Egner <info@sheepCreativeStudios.de>
+ * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
  * This program is free software: you can redistribute it and/or modify it 
  * under the terms of the GNU General Public License as published by the 
@@ -19,7 +16,10 @@
 #ifndef _LIGHT_FUNCTIONS_H_
 #define _LIGHT_FUNCTIONS_H_
 
+#include "Arduino.h"
 #include "tools.h" // Get blink class from
+#include "mapSwitchToFunctions.h" // get mapping from there
+#include "config.h"
 
 bool parkLightOut = 0;
 bool lowBeamLightOut = 0;
@@ -36,5 +36,4 @@ void runLightFunctions();
 
 Blink flasher[2];
 
-#include "lightFunctions.cpp"
 #endif
