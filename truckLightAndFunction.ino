@@ -29,11 +29,21 @@
 //#include <SoftPWM.h>							// https://github.com/bhagman/SoftPWM
 //#include "debugging.h"					// Handles debbuging info
 
-//#include "ppmToSwitches.h"				// Special functions
-//#include "mapSwitchToFunctions.h"
 //#include "tools.h"
 
+#define DIRECTION_UP 1
+#define DIRECTION_MID 2
+#define DIRECTION_DOWN 3
+struct {
+	uint8_t poti[2];
+	uint8_t lowerSwitch[2];
+	uint8_t upperSwitch[4];
+} channel1;
 
+struct {
+	uint8_t lowerSwitch[2];
+	uint8_t upperSwitch[4];
+} channel2;
 
 void setup() {
 	//SoftPWMBegin();
@@ -69,16 +79,33 @@ void setup() {
 
 void loop() {                             // put your main code here, to run repeatedly:
 	bool errorFlag = false;
-	
-	// 16:59:31.637 -> 1504 row below:	1 Poti (0-100% -> 1000-2000)
-// 16:59:31.637 -> 1568	row below:	2 Poti (0-100% -> 1000-2000)
-// 16:59:31.637 -> 1516	row below:	3 switch (up/mid/down 1000/1500/2000)
-// 16:59:31.637 -> 1528	row below: 	4 switch (up/mid/down 1000/1500/2000)
-// 16:59:31.637 -> 1508	row above:		1 button (up/mid/down 1000/1500/2000)
-// 16:59:31.637 -> 1532	row above:		2 switch (up/mid/down 1000/1500/2000)
-// 16:59:31.637 -> 1532	row above:		3 switch (up/mid/down 1000/1500/2000)
-// 16:59:31.637 -> 1528	row above:		4 button/switch (up/mid/down 1000/1500/2000)
 
-	//getChannel1Switch( channel,  fallbackValue);
+	// Some switches are commented as they are not yet in use.
+	//channel1.poti[0] = getChannel1Poti(0, 0);
+	//channel1.poti[1] = getChannel1Poti(1, 0);
+	//channel1.lowerSwitch[0] = getChannel1Switch(0, DIRECTION_MID);	// Function to get the value of the Switches from Channel 1
+	channel1.lowerSwitch[1] = getChannel1Switch(1, DIRECTION_MID);	// Function to get the value of the Switches from Channel 1
+	//channel1.upperSwitch[0] = getChannel1Switch(2, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 1
+	//channel1.upperSwitch[1] = getChannel1Switch(3, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 1
+	//channel1.upperSwitch[2] = getChannel1Switch(4, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 1
+	channel1.upperSwitch[3] = getChannel1Switch(5, DIRECTION_MID);	// Function to get the value of the Switches from Channel 1
+	bool highBeamLightState = mapSwitchToFunction(channel1.upperSwitch[3], true, false, false);	// Function to map a Key [Down, Mid, Up]
+	bool highBeamLightFlashState = mapSwitchToFunction(channel1.upperSwitch[3], false, false, true);	// Function to map a Key [Down, Mid, Up]
+	bool leftFlashLightState = mapSwitchToFunction(channel1.lowerSwitch[1], true, false, false);	// Function to map a Key [Down, Mid, Up]
+	bool RightFlashLightState = mapSwitchToFunction(channel1.lowerSwitch[1], false, false, true);	// Function to map a Key [Down, Mid, Up]
+
+	channel2.lowerSwitch[0] = getChannel2Switch(5, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
+	//channel2.lowerSwitch[1] = getChannel2Switch(4, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
+	channel2.upperSwitch[0] = getChannel2Switch(3, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
+	channel2.upperSwitch[1] = getChannel2Switch(2, DIRECTION_UP);	// Function to get the value of the Switches from Channel 2
+	channel2.upperSwitch[2] = getChannel2Switch(1, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
+	channel2.upperSwitch[3] = getChannel2Switch(0, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
+	bool parkLightState = mapSwitchToFunction(channel2.lowerSwitch[0], false, true, true);	// Function to map a Key [Down, Mid, Up]
+	bool lowBeamLightState = mapSwitchToFunction(channel2.lowerSwitch[0], false, false, true);	// Function to map a Key [Down, Mid, Up]
+	bool fogLightState = mapSwitchToFunction(channel2.upperSwitch[0], false, false, true);	// Function to map a Key [Down, Mid, Up]
+	bool hazardLightState = mapSwitchToFunction(channel2.upperSwitch[1], false, false, true);	// Function to map a Key [Down, Mid, Up]
+	bool beaconLightState = mapSwitchToFunction(channel2.upperSwitch[2], false, false, true);	// Function to map a Key [Down, Mid, Up]
+	bool auxLightState = mapSwitchToFunction(channel2.upperSwitch[3], false, false, true);	// Function to map a Key [Down, Mid, Up]
+
 
 }

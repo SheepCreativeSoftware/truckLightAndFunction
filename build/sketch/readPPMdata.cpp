@@ -189,3 +189,20 @@ uint8_t getChannel2Switch(uint8_t channel, uint8_t fallbackValue) {
 	// If something wrong return fallback
 	return fallbackValue;
 }
+
+bool mapSwitchToFunction(uint8_t channel, uint8_t downValue, uint8_t midValue, uint8_t upValue) {
+	switch (channel) {
+	case DIRECTION_DOWN:
+		return downValue;
+		break;
+	case DIRECTION_MID:
+		return midValue;
+		break;
+	case DIRECTION_UP:
+		return upValue;
+		break;
+	default:
+		return false;
+		break;
+	}
+}

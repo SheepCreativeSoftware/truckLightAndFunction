@@ -52,11 +52,21 @@
 //#include <SoftPWM.h>							// https://github.com/bhagman/SoftPWM
 //#include "debugging.h"					// Handles debbuging info
 
-//#include "ppmToSwitches.h"				// Special functions
-//#include "mapSwitchToFunctions.h"
 //#include "tools.h"
 
 
+
+
+struct {
+ uint8_t poti[2];
+ uint8_t lowerSwitch[2];
+ uint8_t upperSwitch[4];
+} channel1;
+
+struct {
+ uint8_t lowerSwitch[2];
+ uint8_t upperSwitch[4];
+} channel2;
 
 void setup() {
  //SoftPWMBegin();
@@ -66,7 +76,7 @@ void setup() {
 	* Setup Inputs 
 
 	************************************/
-# 44 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+# 54 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
  pinMode(2 /*PPM Signal from Remote Control Extension | Interrupt Needed*/, 0x2);
  pinMode(3 /*PPM Signal from Remote Control Extension | Interrupt Needed*/, 0x2);
  pinMode(7 /*Steering Servo Signal from Receiver  | Interrupt Needed*/, 0x2);
@@ -77,7 +87,7 @@ void setup() {
 	* Setup Outputs 
 
 	************************************/
-# 52 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+# 62 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
  pinMode(A0 /*Parking light output pin*/, 0x1);
  pinMode(10 /*Head light low beam output pin | PWM*/, 0x1);
  pinMode(11 /*Head light high beam output pin*/, 0x1);
@@ -94,23 +104,38 @@ void setup() {
 	* Setup Functions
 
 	************************************/
-# 66 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+# 76 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
  initInterrupts(2 /*PPM Signal from Remote Control Extension | Interrupt Needed*/, 3 /*PPM Signal from Remote Control Extension | Interrupt Needed*/, 7 /*Steering Servo Signal from Receiver  | Interrupt Needed*/);
  //debuggingInit();
 }
 
 void loop() { // put your main code here, to run repeatedly:
  bool errorFlag = false;
+ //channel1.poti[0] = getChannel1Poti(0, 0);
+ //channel1.poti[1] = getChannel1Poti(1, 0);
+ //channel1.lowerSwitch[0] = getChannel1Switch(0, DIRECTION_MID);	// Function to get the value of the Switches from Channel 1
+ channel1.lowerSwitch[1] = getChannel1Switch(1, 2); // Function to get the value of the Switches from Channel 1
+ //channel1.upperSwitch[0] = getChannel1Switch(2, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 1
+ //channel1.upperSwitch[1] = getChannel1Switch(3, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 1
+ //channel1.upperSwitch[2] = getChannel1Switch(4, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 1
+ channel1.upperSwitch[3] = getChannel1Switch(5, 2); // Function to get the value of the Switches from Channel 1
+ bool highBeamLightState = mapSwitchToFunction(channel1.upperSwitch[3], true, false, false); // Function to map a Key [Down, Mid, Up]
+ bool highBeamLightFlashState = mapSwitchToFunction(channel1.upperSwitch[3], false, false, true); // Function to map a Key [Down, Mid, Up]
+ bool leftFlashLightState = mapSwitchToFunction(channel1.lowerSwitch[1], true, false, false); // Function to map a Key [Down, Mid, Up]
+ bool RightFlashLightState = mapSwitchToFunction(channel1.lowerSwitch[1], false, false, true); // Function to map a Key [Down, Mid, Up]
 
- // 16:59:31.637 -> 1504 row below:	1 Poti (0-100% -> 1000-2000)
-// 16:59:31.637 -> 1568	row below:	2 Poti (0-100% -> 1000-2000)
-// 16:59:31.637 -> 1516	row below:	3 switch (up/mid/down 1000/1500/2000)
-// 16:59:31.637 -> 1528	row below: 	4 switch (up/mid/down 1000/1500/2000)
-// 16:59:31.637 -> 1508	row above:		1 button (up/mid/down 1000/1500/2000)
-// 16:59:31.637 -> 1532	row above:		2 switch (up/mid/down 1000/1500/2000)
-// 16:59:31.637 -> 1532	row above:		3 switch (up/mid/down 1000/1500/2000)
-// 16:59:31.637 -> 1528	row above:		4 button/switch (up/mid/down 1000/1500/2000)
+ channel2.lowerSwitch[0] = getChannel2Switch(5, 3); // Function to get the value of the Switches from Channel 2
+ //channel2.lowerSwitch[1] = getChannel2Switch(4, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
+ channel2.upperSwitch[0] = getChannel2Switch(3, 3); // Function to get the value of the Switches from Channel 2
+ channel2.upperSwitch[1] = getChannel2Switch(2, 1); // Function to get the value of the Switches from Channel 2
+ channel2.upperSwitch[2] = getChannel2Switch(1, 3); // Function to get the value of the Switches from Channel 2
+ channel2.upperSwitch[3] = getChannel2Switch(0, 3); // Function to get the value of the Switches from Channel 2
+ bool parkLightState = mapSwitchToFunction(channel2.lowerSwitch[0], false, true, true); // Function to map a Key [Down, Mid, Up]
+ bool lowBeamLightState = mapSwitchToFunction(channel2.lowerSwitch[0], false, false, true); // Function to map a Key [Down, Mid, Up]
+ bool fogLightState = mapSwitchToFunction(channel2.upperSwitch[0], false, false, true); // Function to map a Key [Down, Mid, Up]
+ bool hazardLightState = mapSwitchToFunction(channel2.upperSwitch[1], false, false, true); // Function to map a Key [Down, Mid, Up]
+ bool beaconLightState = mapSwitchToFunction(channel2.upperSwitch[2], false, false, true); // Function to map a Key [Down, Mid, Up]
+ bool auxLightState = mapSwitchToFunction(channel2.upperSwitch[3], false, false, true); // Function to map a Key [Down, Mid, Up]
 
- //getChannel1Switch( channel,  fallbackValue);
 
 }
