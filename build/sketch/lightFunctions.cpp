@@ -1,4 +1,4 @@
-#line 1 "/home/magraina/projects/truckLightAndFunction/globalVars.h"
+#line 1 "/home/magraina/projects/truckLightAndFunction/lightFunctions.cpp"
 /************************************ 
  * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
@@ -14,12 +14,20 @@
  * If not, see <https://www.gnu.org/licenses/>.
  ************************************/
 
-#ifndef _GLOBAL_VARS_H_
-#define _GLOBAL_VARS_H_
+#include "lightFunctions.h"
+#include "tools.h"
 
-/************************************
- * Definition and Initialisation 
- * Global Vars, Classes and Functions
- ************************************/
 
-#endif
+Blink flasher[2];
+
+bool directlyToOutput(bool lightState) {
+	return lightState;
+}
+
+bool highBeamFlash(bool lightState, uint16_t flashFrequency) {
+	if(lightState) return flasher[0].blink(flashFrequency);
+	// else the reset
+	flasher[0].resetBlink();
+	return false;
+}
+

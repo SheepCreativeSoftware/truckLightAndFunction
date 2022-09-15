@@ -41,13 +41,13 @@
 # 22 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
 # 23 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino" 2
 # 24 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino" 2
-# 25 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino" 2
 /************************************
 
  * Include Module and Library Files
 
  ************************************/
-# 28 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+# 27 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+# 28 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino" 2
 # 29 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino" 2
 //#include <SoftPWM.h>							// https://github.com/bhagman/SoftPWM
 //#include "debugging.h"					// Handles debbuging info
@@ -68,6 +68,23 @@ struct {
  uint8_t upperSwitch[4];
 } channel2;
 
+struct Lights {
+ bool state;
+ bool out;
+};
+
+Lights parkLight;
+Lights lowBeamLight;
+Lights highBeamLight;
+Lights highBeamLightFlash;
+Lights leftFlashLight;
+Lights rightFlashLight;
+Lights fogLight;
+Lights hazardLight;
+Lights beaconLight;
+Lights auxLight;
+
+
 void setup() {
  //SoftPWMBegin();
  // put your setup code here, to run once:
@@ -76,7 +93,7 @@ void setup() {
 	* Setup Inputs 
 
 	************************************/
-# 54 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+# 71 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
  pinMode(2 /*PPM Signal from Remote Control Extension | Interrupt Needed*/, 0x2);
  pinMode(3 /*PPM Signal from Remote Control Extension | Interrupt Needed*/, 0x2);
  pinMode(7 /*Steering Servo Signal from Receiver  | Interrupt Needed*/, 0x2);
@@ -87,7 +104,7 @@ void setup() {
 	* Setup Outputs 
 
 	************************************/
-# 62 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+# 79 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
  pinMode(A0 /*Parking light output pin*/, 0x1);
  pinMode(10 /*Head light low beam output pin | PWM*/, 0x1);
  pinMode(11 /*Head light high beam output pin*/, 0x1);
@@ -104,13 +121,15 @@ void setup() {
 	* Setup Functions
 
 	************************************/
-# 76 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+# 93 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
  initInterrupts(2 /*PPM Signal from Remote Control Extension | Interrupt Needed*/, 3 /*PPM Signal from Remote Control Extension | Interrupt Needed*/, 7 /*Steering Servo Signal from Receiver  | Interrupt Needed*/);
  //debuggingInit();
 }
 
 void loop() { // put your main code here, to run repeatedly:
  bool errorFlag = false;
+
+ // Some switches are commented as they are not yet in use.
  //channel1.poti[0] = getChannel1Poti(0, 0);
  //channel1.poti[1] = getChannel1Poti(1, 0);
  //channel1.lowerSwitch[0] = getChannel1Switch(0, DIRECTION_MID);	// Function to get the value of the Switches from Channel 1
@@ -119,10 +138,10 @@ void loop() { // put your main code here, to run repeatedly:
  //channel1.upperSwitch[1] = getChannel1Switch(3, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 1
  //channel1.upperSwitch[2] = getChannel1Switch(4, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 1
  channel1.upperSwitch[3] = getChannel1Switch(5, 2); // Function to get the value of the Switches from Channel 1
- bool highBeamLightState = mapSwitchToFunction(channel1.upperSwitch[3], true, false, false); // Function to map a Key [Down, Mid, Up]
- bool highBeamLightFlashState = mapSwitchToFunction(channel1.upperSwitch[3], false, false, true); // Function to map a Key [Down, Mid, Up]
- bool leftFlashLightState = mapSwitchToFunction(channel1.lowerSwitch[1], true, false, false); // Function to map a Key [Down, Mid, Up]
- bool RightFlashLightState = mapSwitchToFunction(channel1.lowerSwitch[1], false, false, true); // Function to map a Key [Down, Mid, Up]
+ highBeamLight.state = mapSwitchToFunction(channel1.upperSwitch[3], true, false, false); // Function to map a Key [Down, Mid, Up]
+ highBeamLightFlash.state = mapSwitchToFunction(channel1.upperSwitch[3], false, false, true); // Function to map a Key [Down, Mid, Up]
+ leftFlashLight.state = mapSwitchToFunction(channel1.lowerSwitch[1], true, false, false); // Function to map a Key [Down, Mid, Up]
+ rightFlashLight.state = mapSwitchToFunction(channel1.lowerSwitch[1], false, false, true); // Function to map a Key [Down, Mid, Up]
 
  channel2.lowerSwitch[0] = getChannel2Switch(5, 3); // Function to get the value of the Switches from Channel 2
  //channel2.lowerSwitch[1] = getChannel2Switch(4, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
@@ -130,12 +149,18 @@ void loop() { // put your main code here, to run repeatedly:
  channel2.upperSwitch[1] = getChannel2Switch(2, 1); // Function to get the value of the Switches from Channel 2
  channel2.upperSwitch[2] = getChannel2Switch(1, 3); // Function to get the value of the Switches from Channel 2
  channel2.upperSwitch[3] = getChannel2Switch(0, 3); // Function to get the value of the Switches from Channel 2
- bool parkLightState = mapSwitchToFunction(channel2.lowerSwitch[0], false, true, true); // Function to map a Key [Down, Mid, Up]
- bool lowBeamLightState = mapSwitchToFunction(channel2.lowerSwitch[0], false, false, true); // Function to map a Key [Down, Mid, Up]
- bool fogLightState = mapSwitchToFunction(channel2.upperSwitch[0], false, false, true); // Function to map a Key [Down, Mid, Up]
- bool hazardLightState = mapSwitchToFunction(channel2.upperSwitch[1], false, false, true); // Function to map a Key [Down, Mid, Up]
- bool beaconLightState = mapSwitchToFunction(channel2.upperSwitch[2], false, false, true); // Function to map a Key [Down, Mid, Up]
- bool auxLightState = mapSwitchToFunction(channel2.upperSwitch[3], false, false, true); // Function to map a Key [Down, Mid, Up]
+ parkLight.state = mapSwitchToFunction(channel2.lowerSwitch[0], false, true, true); // Function to map a Key [Down, Mid, Up]
+ lowBeamLight.state = mapSwitchToFunction(channel2.lowerSwitch[0], false, false, true); // Function to map a Key [Down, Mid, Up]
+ fogLight.state = mapSwitchToFunction(channel2.upperSwitch[0], false, false, true); // Function to map a Key [Down, Mid, Up]
+ hazardLight.state = mapSwitchToFunction(channel2.upperSwitch[1], false, false, true); // Function to map a Key [Down, Mid, Up]
+ beaconLight.state = mapSwitchToFunction(channel2.upperSwitch[2], false, false, true); // Function to map a Key [Down, Mid, Up]
+ auxLight.state = mapSwitchToFunction(channel2.upperSwitch[3], false, false, true); // Function to map a Key [Down, Mid, Up]
 
-
+ parkLight.out = directlyToOutput(parkLight.state);
+ lowBeamLight.out = directlyToOutput(lowBeamLight.state);
+ highBeamLight.out = directlyToOutput(highBeamLight.state);
+ highBeamLightFlash.out = highBeamFlash(highBeamLightFlash.state, 500 /* Time frequency for head beam to flash*/);
+ fogLight.out = directlyToOutput(fogLight.state);
+ beaconLight.out = directlyToOutput(beaconLight.state);
+ auxLight.out = directlyToOutput(auxLight.state);
 }

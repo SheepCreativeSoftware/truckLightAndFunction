@@ -15,14 +15,19 @@
     "Includepath": null
   },
   {
-    "Sourcefile": "/home/magraina/projects/truckLightAndFunction/build/sketch/ppmToSwitches.cpp",
+    "Sourcefile": "/home/magraina/projects/truckLightAndFunction/build/sketch/lightFunctions.cpp",
+    "Include": "SoftPWM.h",
+    "Includepath": "/home/magraina/Arduino/libraries/SoftPWM"
+  },
+  {
+    "Sourcefile": "/home/magraina/projects/truckLightAndFunction/build/sketch/lightFunctions.cpp",
     "Include": "",
     "Includepath": null
   },
   {
-    "Sourcefile": "/home/magraina/projects/truckLightAndFunction/build/sketch/readPPMdata.cpp",
-    "Include": "SoftPWM.h",
-    "Includepath": "/home/magraina/Arduino/libraries/SoftPWM"
+    "Sourcefile": "/home/magraina/projects/truckLightAndFunction/build/sketch/ppmToSwitches.cpp",
+    "Include": "",
+    "Includepath": null
   },
   {
     "Sourcefile": "/home/magraina/projects/truckLightAndFunction/build/sketch/readPPMdata.cpp",

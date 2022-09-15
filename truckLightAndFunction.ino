@@ -21,11 +21,11 @@
  ************************************/
 #include "config.h"								// Configuration File
 #include "ioMapping.h"							// IO Mapping File
-#include "globalVars.h"							// Global Vars File
 /************************************
  * Include Module and Library Files
  ************************************/
 #include "readPPMdata.h"				// read Data from Buffer
+#include "lightFunctions.h"
 //#include <SoftPWM.h>							// https://github.com/bhagman/SoftPWM
 //#include "debugging.h"					// Handles debbuging info
 
@@ -44,6 +44,25 @@ struct {
 	uint8_t lowerSwitch[2];
 	uint8_t upperSwitch[4];
 } channel2;
+
+struct Lights {
+	bool state;
+	bool out;
+};
+
+Lights parkLight;
+Lights lowBeamLight;
+Lights highBeamLight;
+Lights highBeamLightFlash;
+Lights leftFlashLight;
+Lights rightFlashLight;
+Lights fogLight;
+Lights hazardLight;
+Lights beaconLight;
+Lights auxLight;
+
+bool serialIsSent;
+
 
 void setup() {
 	//SoftPWMBegin();
@@ -75,6 +94,7 @@ void setup() {
 	************************************/
 	initInterrupts(inFunction1ControlPPM, inFunction2ControlPPM, inSteerControlPPM);
 	//debuggingInit();
+	SerialUSB.begin(9600);
 }
 
 void loop() {                             // put your main code here, to run repeatedly:
@@ -89,10 +109,10 @@ void loop() {                             // put your main code here, to run rep
 	//channel1.upperSwitch[1] = getChannel1Switch(3, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 1
 	//channel1.upperSwitch[2] = getChannel1Switch(4, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 1
 	channel1.upperSwitch[3] = getChannel1Switch(5, DIRECTION_MID);	// Function to get the value of the Switches from Channel 1
-	bool highBeamLightState = mapSwitchToFunction(channel1.upperSwitch[3], true, false, false);	// Function to map a Key [Down, Mid, Up]
-	bool highBeamLightFlashState = mapSwitchToFunction(channel1.upperSwitch[3], false, false, true);	// Function to map a Key [Down, Mid, Up]
-	bool leftFlashLightState = mapSwitchToFunction(channel1.lowerSwitch[1], true, false, false);	// Function to map a Key [Down, Mid, Up]
-	bool RightFlashLightState = mapSwitchToFunction(channel1.lowerSwitch[1], false, false, true);	// Function to map a Key [Down, Mid, Up]
+	highBeamLight.state = mapSwitchToFunction(channel1.upperSwitch[3], true, false, false);	// Function to map a Key [Down, Mid, Up]
+	highBeamLightFlash.state = mapSwitchToFunction(channel1.upperSwitch[3], false, false, true);	// Function to map a Key [Down, Mid, Up]
+	leftFlashLight.state = mapSwitchToFunction(channel1.lowerSwitch[1], true, false, false);	// Function to map a Key [Down, Mid, Up]
+	rightFlashLight.state = mapSwitchToFunction(channel1.lowerSwitch[1], false, false, true);	// Function to map a Key [Down, Mid, Up]
 
 	channel2.lowerSwitch[0] = getChannel2Switch(5, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
 	//channel2.lowerSwitch[1] = getChannel2Switch(4, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
@@ -100,12 +120,88 @@ void loop() {                             // put your main code here, to run rep
 	channel2.upperSwitch[1] = getChannel2Switch(2, DIRECTION_UP);	// Function to get the value of the Switches from Channel 2
 	channel2.upperSwitch[2] = getChannel2Switch(1, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
 	channel2.upperSwitch[3] = getChannel2Switch(0, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
-	bool parkLightState = mapSwitchToFunction(channel2.lowerSwitch[0], false, true, true);	// Function to map a Key [Down, Mid, Up]
-	bool lowBeamLightState = mapSwitchToFunction(channel2.lowerSwitch[0], false, false, true);	// Function to map a Key [Down, Mid, Up]
-	bool fogLightState = mapSwitchToFunction(channel2.upperSwitch[0], false, false, true);	// Function to map a Key [Down, Mid, Up]
-	bool hazardLightState = mapSwitchToFunction(channel2.upperSwitch[1], false, false, true);	// Function to map a Key [Down, Mid, Up]
-	bool beaconLightState = mapSwitchToFunction(channel2.upperSwitch[2], false, false, true);	// Function to map a Key [Down, Mid, Up]
-	bool auxLightState = mapSwitchToFunction(channel2.upperSwitch[3], false, false, true);	// Function to map a Key [Down, Mid, Up]
+	parkLight.state = mapSwitchToFunction(channel2.lowerSwitch[0], false, true, true);	// Function to map a Key [Down, Mid, Up]
+	lowBeamLight.state = mapSwitchToFunction(channel2.lowerSwitch[0], false, false, true);	// Function to map a Key [Down, Mid, Up]
+	fogLight.state = mapSwitchToFunction(channel2.upperSwitch[0], false, false, true);	// Function to map a Key [Down, Mid, Up]
+	hazardLight.state = mapSwitchToFunction(channel2.upperSwitch[1], false, false, true);	// Function to map a Key [Down, Mid, Up]
+	beaconLight.state = mapSwitchToFunction(channel2.upperSwitch[2], false, false, true);	// Function to map a Key [Down, Mid, Up]
+	auxLight.state = mapSwitchToFunction(channel2.upperSwitch[3], false, false, true);	// Function to map a Key [Down, Mid, Up]
 
+	parkLight.out = directlyToOutput(parkLight.state);
+	lowBeamLight.out = directlyToOutput(lowBeamLight.state);
+	highBeamLight.out = highBeamFlash(highBeamLight.state, highBeamLightFlash.state, HIGH_BEAM_FLASH_FREQUENCY);
+	fogLight.out = directlyToOutput(fogLight.state);
+	beaconLight.out = directlyToOutput(beaconLight.state);
+	auxLight.out = directlyToOutput(auxLight.state);
 
+	digitalWrite(outParkingLight, parkLight.out);
+	digitalWrite(outLowBeamLight, lowBeamLight.out);
+	digitalWrite(outHighBeamLight, highBeamLight.out);
+	digitalWrite(outFogLight, fogLight.out);
+	digitalWrite(outAuxLight, auxLight.out);
+
+	if((millis()%1000 >= 500) && (serialIsSent == false)) {
+		SerialUSB.println("--Multiswitch 1--");
+		SerialUSB.print("lowerSwitch 1: ");
+		SerialUSB.println(channel1.lowerSwitch[1]);
+		SerialUSB.print("upperSwitch 3: ");
+		SerialUSB.println(channel1.upperSwitch[3]);
+		SerialUSB.println("--Multiswitch 2--");
+		SerialUSB.print("lowerSwitch 0: ");
+		SerialUSB.println(channel2.lowerSwitch[0]);
+		SerialUSB.print("upperSwitch 0: ");
+		SerialUSB.println(channel2.upperSwitch[0]);
+		SerialUSB.print("upperSwitch 1: ");
+		SerialUSB.println(channel2.upperSwitch[1]);
+		SerialUSB.print("upperSwitch 2: ");
+		SerialUSB.println(channel2.upperSwitch[2]);
+		SerialUSB.print("upperSwitch 3: ");
+		SerialUSB.println(channel2.upperSwitch[3]);
+		SerialUSB.println("-- Light State --");
+		SerialUSB.print("parkLight: ");
+		SerialUSB.println(parkLight.state);
+		SerialUSB.print("lowBeamLight: ");
+		SerialUSB.println(lowBeamLight.state);
+		SerialUSB.print("highBeamLight: ");
+		SerialUSB.println(highBeamLight.state);
+		SerialUSB.print("highBeamLightFlash: ");
+		SerialUSB.println(highBeamLightFlash.state);
+		SerialUSB.print("fogLight: ");
+		SerialUSB.println(fogLight.state);
+		SerialUSB.print("beaconLight: ");
+		SerialUSB.println(beaconLight.state);
+		SerialUSB.print("auxLight: ");
+		SerialUSB.println(auxLight.state);
+		SerialUSB.print("hazardLight: ");
+		SerialUSB.println(hazardLight.state);
+		SerialUSB.print("leftFlashLight: ");
+		SerialUSB.println(leftFlashLight.state);
+		SerialUSB.print("rightFlashLight: ");
+		SerialUSB.println(rightFlashLight.state);
+		SerialUSB.println("-- Light Out --");
+		SerialUSB.print("parkLight: ");
+		SerialUSB.println(parkLight.out);
+		SerialUSB.print("lowBeamLight: ");
+		SerialUSB.println(lowBeamLight.out);
+		SerialUSB.print("highBeamLight: ");
+		SerialUSB.println(highBeamLight.out);
+		SerialUSB.print("highBeamLightFlash: ");
+		SerialUSB.println(highBeamLightFlash.out);
+		SerialUSB.print("fogLight: ");
+		SerialUSB.println(fogLight.out);
+		SerialUSB.print("beaconLight: ");
+		SerialUSB.println(beaconLight.out);
+		SerialUSB.print("auxLight: ");
+		SerialUSB.println(auxLight.out);
+		SerialUSB.print("hazardLight: ");
+		SerialUSB.println(hazardLight.out);
+		SerialUSB.print("leftFlashLight: ");
+		SerialUSB.println(leftFlashLight.out);
+		SerialUSB.print("rightFlashLight: ");
+		SerialUSB.println(rightFlashLight.out);
+		SerialUSB.println("-------End-------");
+		serialIsSent = true;
+	} else if((millis()%1000 < 500) && (serialIsSent == true)) {
+		serialIsSent = false;
+	}
 }

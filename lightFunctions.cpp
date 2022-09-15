@@ -13,27 +13,21 @@
  * If not, see <https://www.gnu.org/licenses/>.
  ************************************/
 
-#ifndef _LIGHT_FUNCTIONS_H_
-#define _LIGHT_FUNCTIONS_H_
+#include "lightFunctions.h"
+#include "tools.h"
 
-#include "Arduino.h"
-#include "tools.h" // Get blink class from
-#include "mapSwitchToFunctions.h" // get mapping from there
-#include "config.h"
-
-bool parkLightOut = 0;
-bool lowBeamLightOut = 0;
-bool highBeamLightOut = 0;
-bool highBeamLightFlashOut = 0;
-bool fogLightOut = 0;
-bool leftFlashLightOut = 0;
-bool rightFlashLightOut = 0;
-bool hazardLightOut = 0;
-bool beaconLightOut = 0;
-bool auxLightOut = 0;
-
-void runLightFunctions();
 
 Blink flasher[2];
 
-#endif
+bool directlyToOutput(bool lightState) {
+	return lightState;
+}
+
+bool highBeamFlash(bool lightState, bool lightFlashState, uint16_t flashFrequency) {
+	if(lightState) return true;
+	if(lightFlashState) return flasher[0].blink(flashFrequency);
+	// else the reset
+	flasher[0].resetBlink();
+	return false;
+}
+

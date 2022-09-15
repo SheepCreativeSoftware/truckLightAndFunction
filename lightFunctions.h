@@ -13,31 +13,12 @@
  * If not, see <https://www.gnu.org/licenses/>.
  ************************************/
 
-#include "lightFunctions.h"
+#ifndef _LIGHT_FUNCTIONS_H_
+#define _LIGHT_FUNCTIONS_H_
 
+#include "Arduino.h"
 
+bool directlyToOutput(bool lightState);
+bool highBeamFlash(bool lightState, bool lightFlashState, uint16_t flashFrequency);
 
-// parkLightState = 0;
-// lowBeamLightState = 0;
-// highBeamLightState = 0;
-// highBeamLightFlashState = 0;
-// fogLightState = 0;
-// leftFlashLightState = 0;
-// RightFlashLightState = 0;
-// hazardLightState = 0;
-// beaconLightState = 0;
-// auxLightState = 0;
-
-void runLightFunctions() {
-	parkLightOut = parkLightState;
-	lowBeamLightOut = lowBeamLightOut;
-	if(highBeamLightState) {
-		highBeamLightOut = true;
-	} else if(highBeamLightFlashState) {
-		highBeamLightOut = flasher[0].blink(HIGH_BEAM_FLASH_FREQUENCY);
-	} else {
-		highBeamLightOut = false;
-		flasher[0].resetBlink();
-	}
-}
-
+#endif
