@@ -27,7 +27,7 @@
 //Inputs
 #define inFunction1ControlPPM 2            //PPM Signal from Remote Control Extension | Interrupt Needed
 #define inFunction2ControlPPM 3            //PPM Signal from Remote Control Extension | Interrupt Needed
-#define inSteerControlPPM 7               //Steering Servo Signal from Receiver  | Interrupt Needed
+#define inSoundPPM 7               			//Soundmodul Servo Signal from Receiver  | Interrupt Needed
 // Pin 0+1+4 reserved for RS485!
 #define inBrakeSignal A4                   //Brake Signal from Servonaut Speed Controller
 #define inReverseSignal A5                 //Reverse Signal from Servonaut Speed Controller

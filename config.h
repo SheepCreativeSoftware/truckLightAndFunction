@@ -28,8 +28,8 @@
 #define LIGHT_FADE_OFF_TIME 200				// 200ms Fade off time for the Light
 #define PARKING_DIMM 100					// 0-255 Value for dimming the parking light
 #define NORMAL_LIGHT_DIMMING 255			// 0-255 Value for all light when active
-#define STARTER_DIMMING_MIN 50				// 0-255 MIN Value for all light when active starter is activ
-#define STARTER_DIMMING_MAX 150				// 0-255 MAX Value for all light when active starter is activ
+#define STARTER_DIMM_DIVISOR 5				// Divisor for Dimming function
+#define STARTER_DIMM_MULTI1 2				// 0-255 MAX Value for all light when active starter is activ
 #define SERIAL_COM false					// Activate Communication to other modules via Serial Port
 #if (SERIAL_COM == true)
 	#define TRUCK_ADDRESS 1					//Serial Adress for this Module: Truck
@@ -38,6 +38,6 @@
 	#define EXT_FUNC_ADDRESS 4				//Serial Adress for Module: Special function for example Servos Steering
 #endif
 //Change this value for different debuging levels
-#define DEBUGLEVEL 3						//1 = Status LED | >2 = Serial Monitor
+#define DEBUGLEVEL 5						//1 = Status LED | >2 = Serial Monitor
 
 #endif

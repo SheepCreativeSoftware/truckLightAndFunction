@@ -18,7 +18,7 @@
 #include <SoftPWM.h>							// https://github.com/bhagman/SoftPWM
 
 
-Blink flasher[2];
+Blink flasher[3];
 
 bool directlyToOutput(bool lightState) {
 	return lightState;
@@ -108,4 +108,9 @@ void setCombinedHeadlightParkOnly(uint8_t pin,
 	} else {
 		SoftPWMSet(pin, SOFT_PWM_LOW);
 	}
+}
+
+uint8_t starterDimming(bool active, uint8_t defaultDimValue, uint8_t divisor, uint8_t multiplier1) {
+	if(!active) return defaultDimValue;
+	if(active) return defaultDimValue / divisor * multiplier1;
 }

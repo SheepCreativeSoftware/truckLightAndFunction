@@ -25,7 +25,7 @@
 #define PPM_HIGH_MAX 2200							// Maximun for High impuls
 #define MULTI1 0									// Array number of Multiswitch
 #define MULTI2 1									// Array number of Multiswitch
-#define MAX_TIME_SIGNAL 2000						// 2000ms Maximum time for signal to change
+#define MAX_TIME_SIGNAL 5000						// 2000ms Maximum time for signal to change
 
 // Variables
 struct multiswitch {
@@ -60,8 +60,8 @@ void initInterrupts(uint8_t pinPPMChannel1, uint8_t pinPPMChannel2, uint8_t pinS
 void ppmMultiInterrupt1(){
 	volatile uint32_t nMicros = micros(); 							//Store current time
 	volatile uint32_t nDifference = (nMicros - interrupt[MULTI1].lastMicros); //Calc time since last Change
-	if((nDifference > (int)PPM_HIGH_MIN) && (nDifference < (int)PPM_HIGH_MAX)) { 		//Filter HIGH Impulse | HIGH if time is between 700 and 2200 
-		if((nDifference > (int)PPM_START_MIN) && (nDifference < (int)PPM_START_MAX)) { 				//if time is ~915 then this is the start impulse
+	if((nDifference > (uint16_t)PPM_HIGH_MIN) && (nDifference < (uint16_t)PPM_HIGH_MAX)) { 		//Filter HIGH Impulse | HIGH if time is between 700 and 2200 
+		if((nDifference > (uint16_t)PPM_START_MIN) && (nDifference < (uint16_t)PPM_START_MAX)) { 				//if time is ~915 then this is the start impulse
 			interrupt[MULTI1].position = 0; 									//then set index to 0
 		} else if(interrupt[MULTI1].position < INTERRUPT_BUFFERSIZE) {					//if index is out of bound, then wait for next start impulse
 			interrupt[MULTI1].buffer[interrupt[MULTI1].position] = nDifference;			//save current time difference to value
@@ -75,8 +75,8 @@ void ppmMultiInterrupt1(){
 void ppmMultiInterrupt2(){
 	volatile uint32_t nMicros = micros(); 							//Store current time
 	volatile uint32_t nDifference = (nMicros - interrupt[MULTI2].lastMicros); //Calc time since last Change
-	if((nDifference > (int)PPM_HIGH_MIN) && (nDifference < (int)PPM_HIGH_MAX)) {		//Filter HIGH Impulse | HIGH if time is between 700 and 2200 else return
-		if((nDifference > (int)PPM_START_MIN) && (nDifference < (int)PPM_START_MAX)) { 				//if time is ~915 then this is the start impulse
+	if((nDifference > (uint16_t)PPM_HIGH_MIN) && (nDifference < (uint16_t)PPM_HIGH_MAX)) {		//Filter HIGH Impulse | HIGH if time is between 700 and 2200 else return
+		if((nDifference > (uint16_t)PPM_START_MIN) && (nDifference < (uint16_t)PPM_START_MAX)) { 				//if time is ~915 then this is the start impulse
 			interrupt[MULTI2].position = 0; 									//then set index to 0
 			return;														// And wait for the next impulse
 		} else	if(interrupt[MULTI2].position < INTERRUPT_BUFFERSIZE) {					//if index is out of bound, then wait for next start impulse
@@ -100,7 +100,7 @@ void ppmServoInterrupt(){
 }
 
 bool checkChannelStatus(uint8_t multiSwitch) {
-	if((millis()-interrupt[multiSwitch].lastValidMillis) >= (int)MAX_TIME_SIGNAL) return false;
+	if((millis()-interrupt[multiSwitch].lastValidMillis) >= (uint16_t)MAX_TIME_SIGNAL) return false;
 	return true;
 }
 

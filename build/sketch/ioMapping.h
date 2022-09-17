@@ -34,20 +34,20 @@
 #define inReverseSignal A5                 //Reverse Signal from Servonaut Speed Controller
 
 //Outputs
-#if (debugLevel >=1)
+#if (DEBUGLEVEL >=1)
 	#define outStatusLed 13					//Arduino status LED output Pin
 #endif
-#define outParkingLight A0                 //Parking light output pin
+#define outParkingLight A3                 //Parking light output pin
 #define outLowBeamLight 10                 //Head light low beam output pin | PWM
 #define outHighBeamLight 11               //Head light high beam output pin
-#define outFogLight A1                    //Fog light output pin
+#define outFogLight A2                    //Fog light output pin
 #define outFrontLeftFlashLight 8         //Front left flashing light output pin
 #define outFrontRightFlashLight 9        //Front right flashing light output pin
 #define outRearLeftFlashLight 5           //Rear left flashing light output pin | PWM Needed for US
 #define outRearRightFlashLight 6          //Rear right flashing light output pin | PWM Needed for US
-#define outReverseLight A2                //Reverse light output pin
+#define outReverseLight A1                //Reverse light output pin
 #define outBrakeLight 12                  //Brake light output pin | PWM for Parking Light
-#define outAuxLight A3                    //Reserved for Special Auxiliary Light
+#define outAuxLight A0                    //Reserved for Special Auxiliary Light
 //Free IOs 18, 19
 
 #endif

@@ -18,6 +18,8 @@
  * If not, see <https://www.gnu.org/licenses/>.
  ************************************/
 
+#define US 0
+#define EU 1
 /************************************
  * Configuration Programm
  ************************************/
@@ -26,16 +28,13 @@
 /************************************
  * Include Module and Library Files
  ************************************/
+
 #include "readPPMdata.h"				// read Data from Buffer
 #include "lightFunctions.h"
-//#include <SoftPWM.h>							// https://github.com/bhagman/SoftPWM
-//#include "debugging.h"					// Handles debbuging info
+#if (DEBUGLEVEL >=1)
+#include "debugging.h"					// Handles debbuging info
+#endif
 
-//#include "tools.h"
-
-#define DIRECTION_UP 1
-#define DIRECTION_MID 2
-#define DIRECTION_DOWN 3
 struct {
 	uint8_t poti[2];
 	uint8_t lowerSwitch[2];
@@ -62,17 +61,27 @@ Lights fogLight;
 Lights hazardLight;
 Lights beaconLight;
 Lights auxLight;
+Lights brakeLight;
+Lights reverseLight;
 
-bool serialIsSent;
+//Setup Serial and check if Board is UNO with one Serial or Leonardo/Micro with to Serials
+#ifdef HAVE_HWSERIAL1							//if serial ports 1 exist then the arduino has more than one serial port
+	#ifndef SerialUSB								//if not allready defined
+		#define SerialUSB SERIAL_PORT_MONITOR		//then define monitor port
+	#endif
+#else
+	#if (DEBUGLEVEL >1)								//if serial ports are the same debuging is not possible (for example on UNO)
+		#define DEBUGLEVEL 1						//do not change!!!
+	#endif
+#endif
 
 
-#line 67 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+#line 77 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
 void setup();
-#line 100 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+#line 112 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
 void loop();
-#line 67 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+#line 77 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
 void setup() {
-	//SoftPWMBegin();
 	// put your setup code here, to run once:
 	/************************************
 	* Setup Inputs 
@@ -85,131 +94,174 @@ void setup() {
 	/************************************
 	* Setup Outputs 
 	************************************/
-	pinMode(outParkingLight, OUTPUT);
-	pinMode(outLowBeamLight, OUTPUT);
-	pinMode(outHighBeamLight, OUTPUT);
-	pinMode(outFogLight, OUTPUT);
-	pinMode(outFrontLeftFlashLight, OUTPUT);
-	pinMode(outFrontRightFlashLight, OUTPUT);
-	pinMode(outRearLeftFlashLight, OUTPUT);
-	pinMode(outRearRightFlashLight, OUTPUT);
-	pinMode(outReverseLight, OUTPUT);
-	pinMode(outBrakeLight, OUTPUT);
-	pinMode(outAuxLight, OUTPUT);
+	initLightOutput();
+	setupLightOutput(outParkingLight, LIGHT_FADE_ON_TIME, LIGHT_FADE_OFF_TIME);
+	setupLightOutput(outLowBeamLight, LIGHT_FADE_ON_TIME, LIGHT_FADE_OFF_TIME);
+	setupLightOutput(outHighBeamLight, LIGHT_FADE_ON_TIME, LIGHT_FADE_OFF_TIME);
+	setupLightOutput(outFogLight, LIGHT_FADE_ON_TIME, LIGHT_FADE_OFF_TIME);
+	setupLightOutput(outFrontLeftFlashLight, LIGHT_FADE_ON_TIME, LIGHT_FADE_OFF_TIME);
+	setupLightOutput(outFrontRightFlashLight, LIGHT_FADE_ON_TIME, LIGHT_FADE_OFF_TIME);
+	setupLightOutput(outRearLeftFlashLight, LIGHT_FADE_ON_TIME, LIGHT_FADE_OFF_TIME);
+	setupLightOutput(outRearRightFlashLight, LIGHT_FADE_ON_TIME, LIGHT_FADE_OFF_TIME);
+	setupLightOutput(outReverseLight, LIGHT_FADE_ON_TIME, LIGHT_FADE_OFF_TIME);
+	setupLightOutput(outBrakeLight, LIGHT_FADE_ON_TIME, LIGHT_FADE_OFF_TIME);
+	setupLightOutput(outAuxLight, LIGHT_FADE_ON_TIME, LIGHT_FADE_OFF_TIME);
+
 	/************************************
 	* Setup Functions
 	************************************/
 	initInterrupts(inFunction1ControlPPM, inFunction2ControlPPM, inSteerControlPPM);
-	//debuggingInit();
-	SerialUSB.begin(9600);
+	#if (DEBUGLEVEL >=1)
+	debuggingInit(DEBUGLEVEL, outStatusLed);
+	#endif
 }
 
 void loop() {                             // put your main code here, to run repeatedly:
 	bool errorFlag = false;
 
-	// Some switches are commented as they are not yet in use.
-	//channel1.poti[0] = getChannel1Poti(0, 0);
-	//channel1.poti[1] = getChannel1Poti(1, 0);
-	//channel1.lowerSwitch[0] = getChannel1Switch(0, DIRECTION_MID);	// Function to get the value of the Switches from Channel 1
+	/*
+	 * Read Switches and Potis from Multiswitches
+	 * Some switches are commented as they are not yet in use.
+	 */
+	channel1.poti[0] = getChannel1Poti(0, 0);
+	channel1.poti[1] = getChannel1Poti(1, 0);
+	channel1.lowerSwitch[0] = getChannel1Switch(0, DIRECTION_MID);	// Function to get the value of the Switches from Channel 1
 	channel1.lowerSwitch[1] = getChannel1Switch(1, DIRECTION_MID);	// Function to get the value of the Switches from Channel 1
-	//channel1.upperSwitch[0] = getChannel1Switch(2, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 1
-	//channel1.upperSwitch[1] = getChannel1Switch(3, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 1
-	//channel1.upperSwitch[2] = getChannel1Switch(4, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 1
+	channel1.upperSwitch[0] = getChannel1Switch(2, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 1
+	channel1.upperSwitch[1] = getChannel1Switch(3, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 1
+	channel1.upperSwitch[2] = getChannel1Switch(4, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 1
 	channel1.upperSwitch[3] = getChannel1Switch(5, DIRECTION_MID);	// Function to get the value of the Switches from Channel 1
+
+	channel2.lowerSwitch[0] = getChannel2Switch(5, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
+	channel2.lowerSwitch[1] = getChannel2Switch(4, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
+	channel2.upperSwitch[0] = getChannel2Switch(3, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
+	channel2.upperSwitch[1] = getChannel2Switch(2, DIRECTION_UP);	// Function to get the value of the Switches from Channel 2
+	channel2.upperSwitch[2] = getChannel2Switch(1, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
+	channel2.upperSwitch[3] = getChannel2Switch(0, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
+
+	/*
+	 * Map switches to Functions
+	 */
 	highBeamLight.state = mapSwitchToFunction(channel1.upperSwitch[3], true, false, false);	// Function to map a Key [Down, Mid, Up]
 	highBeamLightFlash.state = mapSwitchToFunction(channel1.upperSwitch[3], false, false, true);	// Function to map a Key [Down, Mid, Up]
 	leftFlashLight.state = mapSwitchToFunction(channel1.lowerSwitch[1], true, false, false);	// Function to map a Key [Down, Mid, Up]
 	rightFlashLight.state = mapSwitchToFunction(channel1.lowerSwitch[1], false, false, true);	// Function to map a Key [Down, Mid, Up]
 
-	channel2.lowerSwitch[0] = getChannel2Switch(5, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
-	//channel2.lowerSwitch[1] = getChannel2Switch(4, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
-	channel2.upperSwitch[0] = getChannel2Switch(3, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
-	channel2.upperSwitch[1] = getChannel2Switch(2, DIRECTION_UP);	// Function to get the value of the Switches from Channel 2
-	channel2.upperSwitch[2] = getChannel2Switch(1, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
-	channel2.upperSwitch[3] = getChannel2Switch(0, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
 	parkLight.state = mapSwitchToFunction(channel2.lowerSwitch[0], false, true, true);	// Function to map a Key [Down, Mid, Up]
 	lowBeamLight.state = mapSwitchToFunction(channel2.lowerSwitch[0], false, false, true);	// Function to map a Key [Down, Mid, Up]
 	fogLight.state = mapSwitchToFunction(channel2.upperSwitch[0], false, false, true);	// Function to map a Key [Down, Mid, Up]
 	hazardLight.state = mapSwitchToFunction(channel2.upperSwitch[1], false, false, true);	// Function to map a Key [Down, Mid, Up]
 	beaconLight.state = mapSwitchToFunction(channel2.upperSwitch[2], false, false, true);	// Function to map a Key [Down, Mid, Up]
 	auxLight.state = mapSwitchToFunction(channel2.upperSwitch[3], false, false, true);	// Function to map a Key [Down, Mid, Up]
+	reverseLight.state = !digitalRead(inReverseSignal);
+	brakeLight.state = !digitalRead(inBrakeSignal);
 
+	/*
+	 * Write Light function state to the output var
+	 */
 	parkLight.out = directlyToOutput(parkLight.state);
 	lowBeamLight.out = directlyToOutput(lowBeamLight.state);
-	highBeamLight.out = highBeamFlash(highBeamLight.state, highBeamLightFlash.state);
+	highBeamLight.out = highBeamFlash(highBeamLight.state, highBeamLightFlash.state, HIGH_BEAM_FLASH_FREQUENCY);
 	fogLight.out = directlyToOutput(fogLight.state);
 	beaconLight.out = directlyToOutput(beaconLight.state);
 	auxLight.out = directlyToOutput(auxLight.state);
-	setFlasherLight(leftFlashLight.state, rightFlashLight.state, hazardLight.state, &leftFlashLight.out, &rightFlashLight.out);
+	reverseLight.out = directlyToOutput(reverseLight.state);
+	brakeLight.out = directlyToOutput(brakeLight.state);
+	setFlasherLight(leftFlashLight.state, rightFlashLight.state, hazardLight.state, &leftFlashLight.out, &rightFlashLight.out, BLINKER_FREQUENCY);
 
-	digitalWrite(outParkingLight, parkLight.out);
-	digitalWrite(outLowBeamLight, lowBeamLight.out);
-	digitalWrite(outHighBeamLight, highBeamLight.out);
-	digitalWrite(outFogLight, fogLight.out);
-	digitalWrite(outAuxLight, auxLight.out);
+	/*
+	 * Set Outputs
+	 */
 
-	if((millis()%1000 >= 500) && (serialIsSent == false)) {
-		SerialUSB.println("--Multiswitch 1--");
-		SerialUSB.print("lowerSwitch 1: ");
-		SerialUSB.println(channel1.lowerSwitch[1]);
-		SerialUSB.print("upperSwitch 3: ");
-		SerialUSB.println(channel1.upperSwitch[3]);
-		SerialUSB.println("--Multiswitch 2--");
-		SerialUSB.print("lowerSwitch 0: ");
-		SerialUSB.println(channel2.lowerSwitch[0]);
-		SerialUSB.print("upperSwitch 0: ");
-		SerialUSB.println(channel2.upperSwitch[0]);
-		SerialUSB.print("upperSwitch 1: ");
-		SerialUSB.println(channel2.upperSwitch[1]);
-		SerialUSB.print("upperSwitch 2: ");
-		SerialUSB.println(channel2.upperSwitch[2]);
-		SerialUSB.print("upperSwitch 3: ");
-		SerialUSB.println(channel2.upperSwitch[3]);
-		SerialUSB.println("-- Light State --");
-		SerialUSB.print("parkLight: ");
-		SerialUSB.println(parkLight.state);
-		SerialUSB.print("lowBeamLight: ");
-		SerialUSB.println(lowBeamLight.state);
-		SerialUSB.print("highBeamLight: ");
-		SerialUSB.println(highBeamLight.state);
-		SerialUSB.print("highBeamLightFlash: ");
-		SerialUSB.println(highBeamLightFlash.state);
-		SerialUSB.print("fogLight: ");
-		SerialUSB.println(fogLight.state);
-		SerialUSB.print("beaconLight: ");
-		SerialUSB.println(beaconLight.state);
-		SerialUSB.print("auxLight: ");
-		SerialUSB.println(auxLight.state);
-		SerialUSB.print("hazardLight: ");
-		SerialUSB.println(hazardLight.state);
-		SerialUSB.print("leftFlashLight: ");
-		SerialUSB.println(leftFlashLight.state);
-		SerialUSB.print("rightFlashLight: ");
-		SerialUSB.println(rightFlashLight.state);
-		SerialUSB.println("-- Light Out --");
-		SerialUSB.print("parkLight: ");
-		SerialUSB.println(parkLight.out);
-		SerialUSB.print("lowBeamLight: ");
-		SerialUSB.println(lowBeamLight.out);
-		SerialUSB.print("highBeamLight: ");
-		SerialUSB.println(highBeamLight.out);
-		SerialUSB.print("highBeamLightFlash: ");
-		SerialUSB.println(highBeamLightFlash.out);
-		SerialUSB.print("fogLight: ");
-		SerialUSB.println(fogLight.out);
-		SerialUSB.print("beaconLight: ");
-		SerialUSB.println(beaconLight.out);
-		SerialUSB.print("auxLight: ");
-		SerialUSB.println(auxLight.out);
-		SerialUSB.print("hazardLight: ");
-		SerialUSB.println(hazardLight.out);
-		SerialUSB.print("leftFlashLight: ");
-		SerialUSB.println(leftFlashLight.out);
-		SerialUSB.print("rightFlashLight: ");
-		SerialUSB.println(rightFlashLight.out);
-		SerialUSB.println("-------End-------");
-		serialIsSent = true;
-	} else if((millis()%1000 < 500) && (serialIsSent == true)) {
-		serialIsSent = false;
-	}
+	setBooleanLight(outParkingLight, parkLight.out, PARKING_DIMM);
+	#if (HEADLIGHT_IS_PARKING && HEADLIGHT_IS_HIGHBEAM) 
+	setCombinedHeadlightAll(outLowBeamLight,
+							parkLight.out,
+							lowBeamLight.out,
+							highBeamLight.out,
+							HEADLIGHT_PARKING_VALUE,
+							HEADLIGHT_LOWBEAM_VALUE,
+							HEADLIGHT_HIGHBEAM_VALUE);
+	#elif (HEADLIGHT_IS_HIGHBEAM)
+	setCombinedHeadlightHighOnly(outLowBeamLight,
+								lowBeamLight.out,
+								highBeamLight.out,
+								HEADLIGHT_LOWBEAM_VALUE,
+								HEADLIGHT_HIGHBEAM_VALUE);
+	#elif (HEADLIGHT_IS_PARKING)
+	setCombinedHeadlightParkOnly(outLowBeamLight,
+								parkLight.out,
+								lowBeamLight.out,
+								HEADLIGHT_PARKING_VALUE,
+								HEADLIGHT_LOWBEAM_VALUE);
+	#else
+	setBooleanLight(outLowBeamLight, lowBeamLight.out);
+	#endif
+	setBooleanLight(outHighBeamLight, highBeamLight.out);
+	setBooleanLight(outFogLight, fogLight.out);
+	setBooleanLight(outAuxLight, auxLight.out);
+	setBooleanLight(outFrontLeftFlashLight, leftFlashLight.out);
+	setBooleanLight(outFrontRightFlashLight, rightFlashLight.out);
+	setBooleanLight(outReverseLight, reverseLight.out);
+	setBooleanLight(outBrakeLight, brakeLight.out);
+
+	#if (COUNTRY_OPTION == EU)
+	setBooleanLight(outRearLeftFlashLight, leftFlashLight.out);
+	setBooleanLight(outRearRightFlashLight, rightFlashLight.out);
+	setBooleanLight(outBrakeLight, brakeLight.out);
+	#endif
+	setBooleanLight(outReverseLight, reverseLight.out);
+
+	/*
+	 * Setup Debugging
+	 */
+
+	#if (DEBUGLEVEL >=1)
+	controllerStatus(errorFlag, outStatusLed);
+	#endif
+
+	#if (DEBUGLEVEL == 2)
+	debugChannelEvaluation(channel1.poti[0],
+							channel1.poti[1],
+							channel1.lowerSwitch[0],
+							channel1.lowerSwitch[1],
+							channel1.upperSwitch[0],
+							channel1.upperSwitch[1],
+							channel1.upperSwitch[2],
+							channel1.upperSwitch[3],
+							channel2.lowerSwitch[0],
+							channel2.lowerSwitch[1],
+							channel2.upperSwitch[0],
+							channel2.upperSwitch[1],
+							channel2.upperSwitch[2],
+							channel2.upperSwitch[3]);
+	#endif
+	#if(DEBUGLEVEL == 3)
+	debugFunctionState(parkLight.state,
+						lowBeamLight.state,
+						highBeamLight.state,
+						highBeamLightFlash.state,
+						fogLight.state,
+						beaconLight.state,
+						auxLight.state,
+						hazardLight.state,
+						leftFlashLight.state,
+						rightFlashLight.state,
+						reverseLight.state,
+						brakeLight.state);
+	#endif
+	#if(DEBUGLEVEL == 4)
+	debugFunctionOut(parkLight.out,
+						lowBeamLight.out,
+						highBeamLight.out,
+						highBeamLightFlash.out,
+						fogLight.out,
+						beaconLight.out,
+						auxLight.out,
+						hazardLight.out,
+						leftFlashLight.out,
+						rightFlashLight.out,
+						reverseLight.state,
+						brakeLight.state);
+	#endif
 }
