@@ -34,6 +34,7 @@
 #if (DEBUGLEVEL >=1)
 #include "debugging.h"					// Handles debbuging info
 #endif
+#include "serialCommMaster.h"
 
 struct {
 	uint8_t poti[2];
@@ -64,6 +65,8 @@ Lights auxLight;
 Lights brakeLight;
 Lights reverseLight;
 
+uint8_t channel3Switch = 0;
+
 //Setup Serial and check if Board is UNO with one Serial or Leonardo/Micro with to Serials
 #ifdef HAVE_HWSERIAL1							//if serial ports 1 exist then the arduino has more than one serial port
 	#ifndef SerialUSB								//if not allready defined
@@ -74,13 +77,16 @@ Lights reverseLight;
 		#define DEBUGLEVEL 1						//do not change!!!
 	#endif
 #endif
+#ifndef SerialHW									//if not allready defined
+	#define SerialHW SERIAL_PORT_HARDWARE			//then define hardware port
+#endif
 
 
-#line 77 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+#line 83 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
 void setup();
-#line 112 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+#line 128 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
 void loop();
-#line 77 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+#line 83 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
 void setup() {
 	// put your setup code here, to run once:
 	/************************************
@@ -88,7 +94,7 @@ void setup() {
 	************************************/
 	pinMode(inFunction1ControlPPM, INPUT_PULLUP);
 	pinMode(inFunction2ControlPPM, INPUT_PULLUP);
-	pinMode(inSteerControlPPM, INPUT_PULLUP);
+	pinMode(inSoundPPM, INPUT);
 	pinMode(inBrakeSignal, INPUT_PULLUP);
 	pinMode(inReverseSignal, INPUT_PULLUP);
 	/************************************
@@ -110,9 +116,19 @@ void setup() {
 	/************************************
 	* Setup Functions
 	************************************/
-	initInterrupts(inFunction1ControlPPM, inFunction2ControlPPM, inSteerControlPPM);
+	initInterrupts(inFunction1ControlPPM, inFunction2ControlPPM, inSoundPPM);
 	#if (DEBUGLEVEL >=1)
 	debuggingInit(DEBUGLEVEL, outStatusLed);
+	#endif
+
+	#if (SERIAL_COM)
+	serialConfigure(&SerialHW,			// Serial interface on arduino
+				19200,					// Baudrate
+				SERIAL_8N1,				// e.g. SERIAL_8N1 | start bit, data bit, stop bit
+				1000, 
+				SERIAL_TURNAROUND, 
+				outTxEnablePin			// Pin to switch between Transmit and Receive
+	);
 	#endif
 }
 
@@ -138,6 +154,8 @@ void loop() {                             // put your main code here, to run rep
 	channel2.upperSwitch[1] = getChannel2Switch(2, DIRECTION_UP);	// Function to get the value of the Switches from Channel 2
 	channel2.upperSwitch[2] = getChannel2Switch(1, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
 	channel2.upperSwitch[3] = getChannel2Switch(0, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
+
+	channel3Switch = getChannel3Signal();
 
 	/*
 	 * Map switches to Functions
@@ -169,48 +187,85 @@ void loop() {                             // put your main code here, to run rep
 	brakeLight.out = directlyToOutput(brakeLight.state);
 	setFlasherLight(leftFlashLight.state, rightFlashLight.state, hazardLight.state, &leftFlashLight.out, &rightFlashLight.out, BLINKER_FREQUENCY);
 
+	bool starterDiming = false;
+	if(channel3Switch == DIRECTION_DOWN) starterDiming = true;
+
 	/*
 	 * Set Outputs
 	 */
+	uint8_t normalDimming = starterDimming(starterDiming, SOFT_PWM_HIGH, STARTER_DIMM_DIVISOR, STARTER_DIMM_MULTI1);
+	uint8_t parkDimming = starterDimming(starterDiming, PARKING_DIMM, STARTER_DIMM_DIVISOR, STARTER_DIMM_MULTI1);
 
-	setBooleanLight(outParkingLight, parkLight.out, PARKING_DIMM);
-	#if (HEADLIGHT_IS_PARKING && HEADLIGHT_IS_HIGHBEAM) 
+	setBooleanLight(outParkingLight, parkLight.out, parkDimming);
+	#if (HEADLIGHT_IS_PARKING && HEADLIGHT_IS_HIGHBEAM)
+	uint8_t headParkDimming = starterDimming(starterDiming, HEADLIGHT_PARKING_VALUE, STARTER_DIMM_DIVISOR, STARTER_DIMM_MULTI1); 
+	uint8_t headLowDimming = starterDimming(starterDiming, HEADLIGHT_LOWBEAM_VALUE, STARTER_DIMM_DIVISOR, STARTER_DIMM_MULTI1); 
+	uint8_t headHighDimming = starterDimming(starterDiming, HEADLIGHT_HIGHBEAM_VALUE, STARTER_DIMM_DIVISOR, STARTER_DIMM_MULTI1); 
 	setCombinedHeadlightAll(outLowBeamLight,
 							parkLight.out,
 							lowBeamLight.out,
 							highBeamLight.out,
-							HEADLIGHT_PARKING_VALUE,
-							HEADLIGHT_LOWBEAM_VALUE,
-							HEADLIGHT_HIGHBEAM_VALUE);
+							headParkDimming,
+							headLowDimming,
+							headHighDimming);
 	#elif (HEADLIGHT_IS_HIGHBEAM)
+	uint8_t headLowDimming = starterDimming(starterDiming, HEADLIGHT_LOWBEAM_VALUE, STARTER_DIMM_DIVISOR, STARTER_DIMM_MULTI1); 
+	uint8_t headHighDimming = starterDimming(starterDiming, HEADLIGHT_HIGHBEAM_VALUE, STARTER_DIMM_DIVISOR, STARTER_DIMM_MULTI1); 
 	setCombinedHeadlightHighOnly(outLowBeamLight,
 								lowBeamLight.out,
 								highBeamLight.out,
-								HEADLIGHT_LOWBEAM_VALUE,
-								HEADLIGHT_HIGHBEAM_VALUE);
+								headLowDimming,
+								headHighDimming);
 	#elif (HEADLIGHT_IS_PARKING)
+	uint8_t headParkDimming = starterDimming(starterDiming, HEADLIGHT_PARKING_VALUE, STARTER_DIMM_DIVISOR, STARTER_DIMM_MULTI1); 
+	uint8_t headLowDimming = starterDimming(starterDiming, HEADLIGHT_LOWBEAM_VALUE, STARTER_DIMM_DIVISOR, STARTER_DIMM_MULTI1); 
 	setCombinedHeadlightParkOnly(outLowBeamLight,
 								parkLight.out,
 								lowBeamLight.out,
-								HEADLIGHT_PARKING_VALUE,
-								HEADLIGHT_LOWBEAM_VALUE);
+								headParkDimming,
+								headLowDimming);
 	#else
-	setBooleanLight(outLowBeamLight, lowBeamLight.out);
+	setBooleanLight(outLowBeamLight, lowBeamLight.out, normalDimming);
 	#endif
-	setBooleanLight(outHighBeamLight, highBeamLight.out);
-	setBooleanLight(outFogLight, fogLight.out);
-	setBooleanLight(outAuxLight, auxLight.out);
-	setBooleanLight(outFrontLeftFlashLight, leftFlashLight.out);
-	setBooleanLight(outFrontRightFlashLight, rightFlashLight.out);
-	setBooleanLight(outReverseLight, reverseLight.out);
-	setBooleanLight(outBrakeLight, brakeLight.out);
+	setBooleanLight(outHighBeamLight, highBeamLight.out, normalDimming);
+	setBooleanLight(outFogLight, fogLight.out, normalDimming);
+	setBooleanLight(outAuxLight, auxLight.out, normalDimming);
+	setBooleanLight(outFrontLeftFlashLight, leftFlashLight.out, normalDimming);
+	setBooleanLight(outFrontRightFlashLight, rightFlashLight.out, normalDimming);
+	setBooleanLight(outReverseLight, reverseLight.out, normalDimming);
+	setBooleanLight(outBrakeLight, brakeLight.out, normalDimming);
 
 	#if (COUNTRY_OPTION == EU)
-	setBooleanLight(outRearLeftFlashLight, leftFlashLight.out);
-	setBooleanLight(outRearRightFlashLight, rightFlashLight.out);
-	setBooleanLight(outBrakeLight, brakeLight.out);
+	setBooleanLight(outRearLeftFlashLight, leftFlashLight.out, normalDimming);
+	setBooleanLight(outRearRightFlashLight, rightFlashLight.out, normalDimming);
+	setBooleanLight(outBrakeLight, brakeLight.out, normalDimming);
 	#endif
-	setBooleanLight(outReverseLight, reverseLight.out);
+	setBooleanLight(outReverseLight, reverseLight.out, normalDimming);
+
+	/*
+	 * Setup serial communication
+	 */
+
+	// Function 1 is Light information data which has only one byte
+	/* 	0 -> parking light,
+		1 -> brake light,
+		2 -> reversing lights,
+		3 -> right blinker,
+		4 -> left blinker,
+		5 -> auxiliary light,
+		6 -> beacon light
+		7 -> dimm light
+	*/
+	setLightData(PARKLIGHT, parkLight.out);
+	setLightData(BRAKELIGHT, brakeLight.out);
+	setLightData(REVERSELIGHT, reverseLight.out);
+	setLightData(RIGHTBLINK, rightFlashLight.out);
+	setLightData(LEFTBLINK, leftFlashLight.out);
+	setLightData(AUXLIGHT, auxLight.out);
+	setLightData(BEACONLIGHT, beaconLight.out);
+	setLightData(DIMMLIGHTS, starterDiming);
+	//setServoData();
+	serialUpdate();
 
 	/*
 	 * Setup Debugging
@@ -263,5 +318,10 @@ void loop() {                             // put your main code here, to run rep
 						rightFlashLight.out,
 						reverseLight.state,
 						brakeLight.state);
+	#endif
+
+	#if (DEBUGLEVEL == 5)
+	SerialUSB.println(starterDiming);
+	//SerialUSB.println(digitalRead(inSoundPPM));
 	#endif
 }

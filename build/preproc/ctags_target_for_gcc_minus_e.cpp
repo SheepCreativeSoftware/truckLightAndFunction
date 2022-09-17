@@ -52,6 +52,7 @@
 
 # 34 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino" 2
 
+# 36 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino" 2
 
 struct {
  uint8_t poti[2];
@@ -82,8 +83,10 @@ Lights auxLight;
 Lights brakeLight;
 Lights reverseLight;
 
+uint8_t channel3Switch = 0;
+
 //Setup Serial and check if Board is UNO with one Serial or Leonardo/Micro with to Serials
-# 77 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+# 83 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
 void setup() {
  // put your setup code here, to run once:
  /************************************
@@ -91,10 +94,10 @@ void setup() {
 	* Setup Inputs 
 
 	************************************/
-# 82 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+# 88 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
  pinMode(2 /*PPM Signal from Remote Control Extension | Interrupt Needed*/, 0x2);
  pinMode(3 /*PPM Signal from Remote Control Extension | Interrupt Needed*/, 0x2);
- pinMode(7 /*Steering Servo Signal from Receiver  | Interrupt Needed*/, 0x2);
+ pinMode(7 /*Soundmodul Servo Signal from Receiver  | Interrupt Needed*/, 0x0);
  pinMode(A4 /*Brake Signal from Servonaut Speed Controller*/, 0x2);
  pinMode(A5 /*Reverse Signal from Servonaut Speed Controller*/, 0x2);
  /************************************
@@ -102,7 +105,7 @@ void setup() {
 	* Setup Outputs 
 
 	************************************/
-# 90 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+# 96 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
  initLightOutput();
  setupLightOutput(A3 /*Parking light output pin*/, 200 /* 200ms Fade on time for the Light*/, 200 /* 200ms Fade off time for the Light*/);
  setupLightOutput(10 /*Head light low beam output pin | PWM*/, 200 /* 200ms Fade on time for the Light*/, 200 /* 200ms Fade off time for the Light*/);
@@ -121,10 +124,20 @@ void setup() {
 	* Setup Functions
 
 	************************************/
-# 106 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
- initInterrupts(2 /*PPM Signal from Remote Control Extension | Interrupt Needed*/, 3 /*PPM Signal from Remote Control Extension | Interrupt Needed*/, 7 /*Steering Servo Signal from Receiver  | Interrupt Needed*/);
+# 112 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+ initInterrupts(2 /*PPM Signal from Remote Control Extension | Interrupt Needed*/, 3 /*PPM Signal from Remote Control Extension | Interrupt Needed*/, 7 /*Soundmodul Servo Signal from Receiver  | Interrupt Needed*/);
 
- debuggingInit(3 /*1 = Status LED | >2 = Serial Monitor*/, 13 /*Arduino status LED output Pin*/);
+ debuggingInit(6 /*1 = Status LED | >2 = Serial Monitor*/, 13 /*Arduino status LED output Pin*/);
+
+
+
+ serialConfigure(&Serial1 /*then define hardware port*/, // Serial interface on arduino
+    19200, // Baudrate
+    0x06, // e.g. SERIAL_8N1 | start bit, data bit, stop bit
+    1000,
+    20,
+    4 // Pin to switch between Transmit and Receive
+ );
 
 }
 
@@ -138,7 +151,7 @@ void loop() { // put your main code here, to run repeatedly:
 	 * Some switches are commented as they are not yet in use.
 
 	 */
-# 119 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+# 135 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
  channel1.poti[0] = getChannel1Poti(0, 0);
  channel1.poti[1] = getChannel1Poti(1, 0);
  channel1.lowerSwitch[0] = getChannel1Switch(0, 2); // Function to get the value of the Switches from Channel 1
@@ -155,12 +168,14 @@ void loop() { // put your main code here, to run repeatedly:
  channel2.upperSwitch[2] = getChannel2Switch(1, 3); // Function to get the value of the Switches from Channel 2
  channel2.upperSwitch[3] = getChannel2Switch(0, 3); // Function to get the value of the Switches from Channel 2
 
+ channel3Switch = getChannel3Signal();
+
  /*
 
 	 * Map switches to Functions
 
 	 */
-# 138 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+# 156 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
  highBeamLight.state = mapSwitchToFunction(channel1.upperSwitch[3], true, false, false); // Function to map a Key [Down, Mid, Up]
  highBeamLightFlash.state = mapSwitchToFunction(channel1.upperSwitch[3], false, false, true); // Function to map a Key [Down, Mid, Up]
  leftFlashLight.state = mapSwitchToFunction(channel1.lowerSwitch[1], true, false, false); // Function to map a Key [Down, Mid, Up]
@@ -180,7 +195,7 @@ void loop() { // put your main code here, to run repeatedly:
 	 * Write Light function state to the output var
 
 	 */
-# 155 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+# 173 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
  parkLight.out = directlyToOutput(parkLight.state);
  lowBeamLight.out = directlyToOutput(lowBeamLight.state);
  highBeamLight.out = highBeamFlash(highBeamLight.state, highBeamLightFlash.state, 800 /* Time frequency for head beam to flash*/);
@@ -191,36 +206,80 @@ void loop() { // put your main code here, to run repeatedly:
  brakeLight.out = directlyToOutput(brakeLight.state);
  setFlasherLight(leftFlashLight.state, rightFlashLight.state, hazardLight.state, &leftFlashLight.out, &rightFlashLight.out, 1000 /* Time frequency for Flasher to flash*/);
 
+ bool starterDiming = false;
+ if(channel3Switch == 3) starterDiming = true;
+
  /*
 
 	 * Set Outputs
 
 	 */
-# 169 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
- setBooleanLight(A3 /*Parking light output pin*/, parkLight.out, 100 /* 0-255 Value for dimming the parking light*/);
-# 185 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+# 189 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+ uint8_t normalDimming = starterDimming(starterDiming, 255, 5 /* Divisor for Dimming function*/, 2 /* 0-255 MAX Value for all light when active starter is activ*/);
+ uint8_t parkDimming = starterDimming(starterDiming, 100 /* 0-255 Value for dimming the parking light*/, 5 /* Divisor for Dimming function*/, 2 /* 0-255 MAX Value for all light when active starter is activ*/);
+
+ setBooleanLight(A3 /*Parking light output pin*/, parkLight.out, parkDimming);
+# 213 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+ uint8_t headParkDimming = starterDimming(starterDiming, 5 /* 0-255 Value for combined operation of Headlight*/, 5 /* Divisor for Dimming function*/, 2 /* 0-255 MAX Value for all light when active starter is activ*/);
+ uint8_t headLowDimming = starterDimming(starterDiming, 255 /* 0-255 Value for combined operation of Headlight*/, 5 /* Divisor for Dimming function*/, 2 /* 0-255 MAX Value for all light when active starter is activ*/);
  setCombinedHeadlightParkOnly(10 /*Head light low beam output pin | PWM*/,
         parkLight.out,
         lowBeamLight.out,
-        5 /* 0-255 Value for combined operation of Headlight*/,
-        255 /* 0-255 Value for combined operation of Headlight*/);
+        headParkDimming,
+        headLowDimming);
 
 
 
- setBooleanLight(11 /*Head light high beam output pin*/, highBeamLight.out);
- setBooleanLight(A2 /*Fog light output pin*/, fogLight.out);
- setBooleanLight(A0 /*Reserved for Special Auxiliary Light*/, auxLight.out);
- setBooleanLight(8 /*Front left flashing light output pin*/, leftFlashLight.out);
- setBooleanLight(9 /*Front right flashing light output pin*/, rightFlashLight.out);
- setBooleanLight(A1 /*Reverse light output pin*/, reverseLight.out);
- setBooleanLight(12 /*Brake light output pin | PWM for Parking Light*/, brakeLight.out);
+ setBooleanLight(11 /*Head light high beam output pin*/, highBeamLight.out, normalDimming);
+ setBooleanLight(A2 /*Fog light output pin*/, fogLight.out, normalDimming);
+ setBooleanLight(A0 /*Reserved for Special Auxiliary Light*/, auxLight.out, normalDimming);
+ setBooleanLight(8 /*Front left flashing light output pin*/, leftFlashLight.out, normalDimming);
+ setBooleanLight(9 /*Front right flashing light output pin*/, rightFlashLight.out, normalDimming);
+ setBooleanLight(A1 /*Reverse light output pin*/, reverseLight.out, normalDimming);
+ setBooleanLight(12 /*Brake light output pin | PWM for Parking Light*/, brakeLight.out, normalDimming);
 
 
- setBooleanLight(5 /*Rear left flashing light output pin | PWM Needed for US*/, leftFlashLight.out);
- setBooleanLight(6 /*Rear right flashing light output pin | PWM Needed for US*/, rightFlashLight.out);
- setBooleanLight(12 /*Brake light output pin | PWM for Parking Light*/, brakeLight.out);
+ setBooleanLight(5 /*Rear left flashing light output pin | PWM Needed for US*/, leftFlashLight.out, normalDimming);
+ setBooleanLight(6 /*Rear right flashing light output pin | PWM Needed for US*/, rightFlashLight.out, normalDimming);
+ setBooleanLight(12 /*Brake light output pin | PWM for Parking Light*/, brakeLight.out, normalDimming);
 
- setBooleanLight(A1 /*Reverse light output pin*/, reverseLight.out);
+ setBooleanLight(A1 /*Reverse light output pin*/, reverseLight.out, normalDimming);
+
+ /*
+
+	 * Setup serial communication
+
+	 */
+# 242 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+ // Function 1 is Light information data which has only one byte
+ /* 	0 -> parking light,
+
+		1 -> brake light,
+
+		2 -> reversing lights,
+
+		3 -> right blinker,
+
+		4 -> left blinker,
+
+		5 -> auxiliary light,
+
+		6 -> beacon light
+
+		7 -> dimm light
+
+	*/
+# 252 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+ setLightData(0, parkLight.out);
+ setLightData(1, brakeLight.out);
+ setLightData(2, reverseLight.out);
+ setLightData(3, rightFlashLight.out);
+ setLightData(4, leftFlashLight.out);
+ setLightData(5, auxLight.out);
+ setLightData(6, beaconLight.out);
+ setLightData(7, starterDiming);
+ //setServoData();
+ serialUpdate();
 
  /*
 
@@ -228,18 +287,5 @@ void loop() { // put your main code here, to run repeatedly:
 
 	 */
  controllerStatus(errorFlag, 13 /*Arduino status LED output Pin*/);
-# 233 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
- debugFunctionState(parkLight.state,
-      lowBeamLight.state,
-      highBeamLight.state,
-      highBeamLightFlash.state,
-      fogLight.state,
-      beaconLight.state,
-      auxLight.state,
-      hazardLight.state,
-      leftFlashLight.state,
-      rightFlashLight.state,
-      reverseLight.state,
-      brakeLight.state);
-# 260 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+# 320 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
 }

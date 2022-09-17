@@ -33,9 +33,8 @@
 #define inReverseSignal A5                 //Reverse Signal from Servonaut Speed Controller
 
 //Outputs
-#if (DEBUGLEVEL >=1)
-	#define outStatusLed 13					//Arduino status LED output Pin
-#endif
+#define outStatusLed 13					//Arduino status LED output Pin
+#define outTxEnablePin 4
 #define outParkingLight A3                 //Parking light output pin
 #define outLowBeamLight 10                 //Head light low beam output pin | PWM
 #define outHighBeamLight 11               //Head light high beam output pin

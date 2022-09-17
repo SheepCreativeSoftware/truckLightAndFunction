@@ -30,14 +30,11 @@
 #define NORMAL_LIGHT_DIMMING 255			// 0-255 Value for all light when active
 #define STARTER_DIMM_DIVISOR 5				// Divisor for Dimming function
 #define STARTER_DIMM_MULTI1 2				// 0-255 MAX Value for all light when active starter is activ
-#define SERIAL_COM false					// Activate Communication to other modules via Serial Port
+#define SERIAL_COM true						// Activate Communication to other modules via Serial Port
 #if (SERIAL_COM == true)
-	#define TRUCK_ADDRESS 1					//Serial Adress for this Module: Truck
-	#define BEACON_ADDRESS 2				//Serial Adress for Module: Beacon Lights Extension
-	#define TRAILER_ADDRESS 3				//Serial Adress for Module: Trailer 
-	#define EXT_FUNC_ADDRESS 4				//Serial Adress for Module: Special function for example Servos Steering
+	#define SERIAL_TURNAROUND 20
 #endif
 //Change this value for different debuging levels
-#define DEBUGLEVEL 5						//1 = Status LED | >2 = Serial Monitor
+#define DEBUGLEVEL 6						//1 = Status LED | >2 = Serial Monitor
 
 #endif

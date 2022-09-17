@@ -32,6 +32,7 @@
 #if (DEBUGLEVEL >=1)
 #include "debugging.h"					// Handles debbuging info
 #endif
+#include "serialCommMaster.h"
 
 struct {
 	uint8_t poti[2];
@@ -65,7 +66,7 @@ Lights reverseLight;
 uint8_t channel3Switch = 0;
 
 //Setup Serial and check if Board is UNO with one Serial or Leonardo/Micro with to Serials
-#ifdef HAVE_HWSERIAL1							//if serial ports 1 exist then the arduino has more than one serial port
+#ifdef HAVE_HWSERIAL1								//if serial ports 1 exist then the arduino has more than one serial port
 	#ifndef SerialUSB								//if not allready defined
 		#define SerialUSB SERIAL_PORT_MONITOR		//then define monitor port
 	#endif
@@ -73,6 +74,9 @@ uint8_t channel3Switch = 0;
 	#if (DEBUGLEVEL >1)								//if serial ports are the same debuging is not possible (for example on UNO)
 		#define DEBUGLEVEL 1						//do not change!!!
 	#endif
+#endif
+#ifndef SerialHW									//if not allready defined
+	#define SerialHW SERIAL_PORT_HARDWARE			//then define hardware port
 #endif
 
 
@@ -108,6 +112,16 @@ void setup() {
 	initInterrupts(inFunction1ControlPPM, inFunction2ControlPPM, inSoundPPM);
 	#if (DEBUGLEVEL >=1)
 	debuggingInit(DEBUGLEVEL, outStatusLed);
+	#endif
+
+	#if (SERIAL_COM)
+	serialConfigure(&SerialHW,			// Serial interface on arduino
+				19200,					// Baudrate
+				SERIAL_8N1,				// e.g. SERIAL_8N1 | start bit, data bit, stop bit
+				1000, 
+				SERIAL_TURNAROUND, 
+				outTxEnablePin			// Pin to switch between Transmit and Receive
+	);
 	#endif
 }
 
@@ -220,6 +234,31 @@ void loop() {                             // put your main code here, to run rep
 	setBooleanLight(outBrakeLight, brakeLight.out, normalDimming);
 	#endif
 	setBooleanLight(outReverseLight, reverseLight.out, normalDimming);
+
+	/*
+	 * Setup serial communication
+	 */
+
+	// Function 1 is Light information data which has only one byte
+	/* 	0 -> parking light,
+		1 -> brake light,
+		2 -> reversing lights,
+		3 -> right blinker,
+		4 -> left blinker,
+		5 -> auxiliary light,
+		6 -> beacon light
+		7 -> dimm light
+	*/
+	setLightData(PARKLIGHT, parkLight.out);
+	setLightData(BRAKELIGHT, brakeLight.out);
+	setLightData(REVERSELIGHT, reverseLight.out);
+	setLightData(RIGHTBLINK, rightFlashLight.out);
+	setLightData(LEFTBLINK, leftFlashLight.out);
+	setLightData(AUXLIGHT, auxLight.out);
+	setLightData(BEACONLIGHT, beaconLight.out);
+	setLightData(DIMMLIGHTS, starterDiming);
+	//setServoData();
+	serialUpdate();
 
 	/*
 	 * Setup Debugging

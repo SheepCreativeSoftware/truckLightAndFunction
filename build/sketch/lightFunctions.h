@@ -47,5 +47,6 @@ void setCombinedHeadlightParkOnly(uint8_t pin,
 							uint8_t lowBeamState,
 							uint8_t parkingOutValue,
 							uint8_t lowBeamOutValue);
+uint8_t starterDimming(bool active, uint8_t defaultDimValue, uint8_t divisor, uint8_t multiplier1);
 
 #endif

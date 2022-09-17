@@ -1,3 +1,4 @@
+#line 1 "/home/magraina/projects/truckLightAndFunction/serialCommMaster.cpp"
 /************************************ 
  * Simple SerialBus Slave Interface v0.0.1
  * Date: 30.08.2022 | 21:52
@@ -15,39 +16,54 @@
  * You should have received a copy of the GNU General Public License along with this program. 
  * If not, see <https://www.gnu.org/licenses/>.
  ************************************/
-#include "Arduino.h"
 #include "serialCommMaster.h"
-#include "HardwareSerial.h"
+
+
+#define BUFFER_SIZE 64
+#define MIN_BUFFER_SIZE 4
+#define BUFFER_EMPTY 0
+#define BROADCAST_ADDRESS 0
+#define FUNC_LIGHT_DATA 1
+#define FUNC_SERVO 2
+
+// For CRC calculation
+#define BIT_COUNT 8
+#define POLYNOMIAL 0xA001
+
+uint8_t frame[BUFFER_SIZE];
+uint8_t TxEnablePin;
+uint16_t errorCount;
+HardwareSerial* SerialPort;
 
 // state machine states
 #define IDLE 1
-#define WAITING_FOR_REPLY 2
-#define WAITING_FOR_TURNAROUND 3
+#define WAITING_FOR_TURNAROUND 2
 #define BUFFER_SIZE 64
 
 #define FUNC_LIGHT_DATA 1
 #define FUNC_SERVO 2
 
-uint8_t state;
-uint8_t sendState;
+uint8_t state = 2;
+uint8_t sendState = 1;
 uint32_t timeout; // timeout interval
 uint32_t polling; // turnaround delay interval
-uint16_t frameDelay; // frame time out in microseconds
+uint16_t frameDelay = 10; // frame time out in microseconds
 uint32_t delayStart; // init variable for turnaround and timeout delay
+
+uint8_t lightDataFromSerial;
+uint16_t servoMicrosFromSerial[2];
 
 void serialConfigure(HardwareSerial *_SerialPort,	// Serial interface on arduino
 					uint32_t baud,						// Baudrate
 					uint8_t byteFormat,		// e.g. SERIAL_8N1 | start bit, data bit, stop bit
 					long _timeout, 
 					long _polling, 
-					uint8_t _slaveID,			// Address of this device
 					uint8_t _TxEnablePin		// Pin to switch between Transmit and Receive
 ) {
 	SerialPort = _SerialPort;						// Store on a global var
 	(*SerialPort).begin(baud, byteFormat);			// Init communication port
 	timeout = _timeout;
 	polling = _polling;
-	slaveID = _slaveID;								// Store on a global var for other functions
 	TxEnablePin = _TxEnablePin;						// Store on a global var for other functions
 	pinMode(TxEnablePin, OUTPUT);
 	digitalWrite(TxEnablePin, LOW);					// Set to low at start to receive data
@@ -59,30 +75,46 @@ uint16_t serialUpdate() {
 		case IDLE:
 			idle();
 		break;
-		case WAITING_FOR_REPLY:
-			//waitingForReply();
-		break;
 		case WAITING_FOR_TURNAROUND:
 			waitingForTurnaround();
 		break;
 	}
-	
+	return errorCount;
 }
 
+
 void idle() {
-	uint16_t data, data2;
 	switch (sendState) {
 		case FUNC_LIGHT_DATA:
-			constructPacket(FUNC_LIGHT_DATA, data, 0);
+			constructPacket(FUNC_LIGHT_DATA, lightDataFromSerial, 0);
 		break;
 		case FUNC_SERVO:
-			constructPacket(FUNC_SERVO, data, data2);
+			constructPacket(FUNC_SERVO, servoMicrosFromSerial[0], servoMicrosFromSerial[1]);
 		break;
 	}
 }
 
 void constructPacket(uint8_t function, uint16_t data, uint16_t data2) {
+	
+	frame[0] = function;
+	uint8_t frameSize;
+	if(function == FUNC_LIGHT_DATA) {
+		frameSize = 4;
+		frame[1] = data & 0x00FF;
+	}
+	if(function == FUNC_SERVO) {
+		frameSize = 7;
+		frame[1] = data >> 8;
+		frame[2] = data & 0xFF;
+		frame[3] = data2 >> 8;
+		frame[4] = data2 & 0xFF;
+	}
+	uint16_t crc16 = calculateCRC(frameSize -2);
+	frame[frameSize - 2] = crc16 >> 8; // Split crc into two bytes
+	frame[frameSize - 1] = crc16 & 0xFF;
 
+	sendPacket(frameSize);
+	state = WAITING_FOR_TURNAROUND;
 }
 
 void waitingForTurnaround() {
@@ -113,9 +145,34 @@ void sendPacket(unsigned char bufferSize) {
 	}
 	(*SerialPort).flush();
 	
-	//delayMicroseconds(frameDelay);
+	delayMicroseconds(frameDelay);
 	
 	digitalWrite(TxEnablePin, LOW);
 		
 	delayStart = millis(); // start the timeout delay	
+}
+
+	// Function 1 is Light information data which has only one byte
+	/* 	0 -> parking light,
+		1 -> brake light,
+		2 -> reversing lights,
+		3 -> right blinker,
+		4 -> left blinker,
+		5 -> auxiliary light,
+		6 -> beacon light
+		7 -> dimm light
+	*/
+void setLightData(uint8_t lightOption, bool lightState) {
+	if(lightState) {
+		uint8_t bitmask = 0x1 << lightOption;
+		lightDataFromSerial |= bitmask;
+	} else {
+		uint8_t bitmask = ~(0x1 << lightOption);
+		lightDataFromSerial &= bitmask;
+	}
+
+}
+
+void setServoData(uint8_t servoOption, uint16_t servoValue) {
+	servoMicrosFromSerial[servoOption] = servoValue;
 }

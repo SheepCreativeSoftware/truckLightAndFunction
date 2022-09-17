@@ -1,4 +1,4 @@
-#line 1 "/home/magraina/projects/truckLightAndFunction/modules/serialCommMaster.h"
+#line 1 "/home/magraina/projects/truckLightAndFunction/serialCommMaster.h"
 /************************************ 
  * Simple SerialBus Master Interface v0.0.1
  * Date: 30.08.2022 | 21:52
@@ -20,37 +20,33 @@
 #ifndef _SERIAL_COMM_SLAVE_H_
 #define _SERIAL_COMM_SLAVE_H_
 
+#include "Arduino.h"
 #include "HardwareSerial.h"
 
-#define BUFFER_SIZE 64
-#define MIN_BUFFER_SIZE 4
-#define BUFFER_EMPTY 0
-#define BROADCAST_ADDRESS 0
-#define FUNC_LIGHT_DATA 1
-#define FUNC_SERVO 2
-
-// For CRC calculation
-#define BIT_COUNT 8
-#define POLYNOMIAL 0xA001
-
-uint8_t frame[BUFFER_SIZE];
-uint8_t slaveID;
-uint8_t TxEnablePin;
-uint16_t errorCount;
-HardwareSerial* SerialPort;
-
-uint8_t lightDataFromSerial;
-uint16_t servoMicrosFromSerial[2];
+#define PARKLIGHT 0
+#define BRAKELIGHT 1
+#define REVERSELIGHT 2
+#define RIGHTBLINK 3
+#define LEFTBLINK 4
+#define AUXLIGHT 5
+#define BEACONLIGHT 6
+#define DIMMLIGHTS 7
 
 void serialConfigure(HardwareSerial *_SerialPort,	// Serial interface on arduino
 					uint32_t baud,						// Baudrate
 					uint8_t byteFormat,		// e.g. SERIAL_8N1 | start bit, data bit, stop bit
 					long _timeout, 
 					long _polling, 
-					uint8_t _slaveID,			// Address of this device
 					uint8_t _TxEnablePin		// Pin to switch between Transmit and Receive
 ) ;
+
+uint16_t serialUpdate();
+void idle(); 
 void waitingForTurnaround();
 void constructPacket(uint8_t function, uint16_t data, uint16_t data2);
+uint16_t calculateCRC(uint8_t bufferSize);
+void sendPacket(unsigned char bufferSize);
+void setLightData(uint8_t lightOption, bool lightState);
+void setServoData(uint8_t servoOption, uint16_t servoValue);
 
 #endif

@@ -38,8 +38,9 @@ struct multiswitch {
 multiswitch interrupt[2];							// Structure for ISR
 
 struct {
-	volatile uint8_t servoValue = 0;				// Saves time difference of this channel
+	volatile uint16_t servoValue = 0;				// Saves time difference of this channel
 	volatile uint32_t lastMicros = 0;				// Time since last interrupt
+	volatile uint32_t lastValidMillis = 0;			// Time since last valid save in interrupt
 } interrupt3;
 
 // Classes
@@ -54,7 +55,7 @@ Filter filter[2];									// Filter Function for Potis
 void initInterrupts(uint8_t pinPPMChannel1, uint8_t pinPPMChannel2, uint8_t pinServoChannel) {
 	attachInterrupt(digitalPinToInterrupt(pinPPMChannel1), ppmMultiInterrupt1, CHANGE); 	//Setup Interrupt
 	attachInterrupt(digitalPinToInterrupt(pinPPMChannel2), ppmMultiInterrupt2, CHANGE);		//Setup Interrupt
-	//attachInterrupt(digitalPinToInterrupt(pinServoChannel), ppmServoInterrupt, CHANGE);		//Setup Interrupt
+	attachInterrupt(digitalPinToInterrupt(pinServoChannel), ppmServoInterrupt, CHANGE);		//Setup Interrupt
 }
 
 void ppmMultiInterrupt1(){
@@ -94,6 +95,7 @@ void ppmServoInterrupt(){
 	volatile uint32_t nDifference = (nMicros - interrupt3.lastMicros); //Calc time since last Change
 	if((nDifference > PPM_HIGH_MIN) && (nDifference < PPM_HIGH_MAX)) { // Filter HIGH Impulse | HIGH if time is between 700 and 2200 
 		interrupt3.servoValue = nDifference;								// Store current time difference to value
+		interrupt3.lastValidMillis = millis();						//save time of the last valid signal
 	}
 	interrupt3.lastMicros = nMicros;								//save time for next interrupt
 	return;
@@ -205,4 +207,9 @@ bool mapSwitchToFunction(uint8_t channel, uint8_t downValue, uint8_t midValue, u
 		return false;
 		break;
 	}
+}
+
+uint16_t getChannel3Signal() {
+	if((millis()-interrupt3.lastValidMillis) >= (uint16_t)MAX_TIME_SIGNAL) return 0;
+	return ppmToSwitchStages(interrupt3.servoValue);
 }

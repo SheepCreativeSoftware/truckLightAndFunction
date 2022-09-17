@@ -156,15 +156,14 @@ uint8_t getChannel1Switch(uint8_t channel, uint8_t fallbackValue) {
 	return fallbackValue;
 }
 
-	// 16:59:31.637 -> 1976	row above:		4 button (up/down 2000/1000)
-	// 16:59:31.637 -> 1984	row above:		3 switch (up/down 2000/1000)
-	// 16:59:31.637 -> 1980	row above:		2 switch (up/down 2000/1000)
-	// 16:59:31.637 -> 1980	row above:		1 switch (up/down 2000/1000)
+	// 16:59:31.637 -> 1976	row above:	4 button (up/down 2000/1000)
+	// 16:59:31.637 -> 1984	row above:	3 switch (up/down 2000/1000)
+	// 16:59:31.637 -> 1980	row above:	2 switch (up/down 2000/1000)
+	// 16:59:31.637 -> 1980	row above:	1 switch (up/down 2000/1000)
 	// 16:59:31.637 -> 1696	row below:	2 switch (up/mid/down 1000/1700/1700)
 	// 16:59:31.637 -> 1716	row below:	2 switch (up/mid/down 1700/1700/1000)
 	// 16:59:31.637 -> 1692	row below:	1 switch (up/mid/down 1000/1700/1700)
 	// 16:59:31.637 -> 1696	row below:	1 switch (up/mid/down 1700/1700/1000)
-
 uint8_t getChannel2Switch(uint8_t channel, uint8_t fallbackValue) {
 	if(!checkChannelStatus(MULTI2)) return fallbackValue;				// return fallback if channel does not respond
 	switch (channel) {

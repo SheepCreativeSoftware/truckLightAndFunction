@@ -1,5 +1,6 @@
-/home/magraina/projects/truckLightAndFunction/build/sketch/truckLightAndFunction.ino.cpp.o: \
- /home/magraina/projects/truckLightAndFunction/build/sketch/truckLightAndFunction.ino.cpp \
+/home/magraina/projects/truckLightAndFunction/build/sketch/serialCommMaster.cpp.o: \
+ /home/magraina/projects/truckLightAndFunction/build/sketch/serialCommMaster.cpp \
+ /home/magraina/projects/truckLightAndFunction/build/sketch/serialCommMaster.h \
  /home/magraina/.arduino15/packages/arduino/hardware/avr/1.8.5/cores/arduino/Arduino.h \
  /home/magraina/.arduino15/packages/arduino/hardware/avr/1.8.5/cores/arduino/binary.h \
  /home/magraina/.arduino15/packages/arduino/hardware/avr/1.8.5/cores/arduino/WCharacter.h \
@@ -14,10 +15,4 @@
  /home/magraina/.arduino15/packages/arduino/hardware/avr/1.8.5/cores/arduino/USBCore.h \
  /home/magraina/.arduino15/packages/arduino/hardware/avr/1.8.5/variants/micro/pins_arduino.h \
  /home/magraina/.arduino15/packages/arduino/hardware/avr/1.8.5/variants/micro/../leonardo/pins_arduino.h \
- /home/magraina/projects/truckLightAndFunction/build/sketch/config.h \
- /home/magraina/projects/truckLightAndFunction/build/sketch/ioMapping.h \
- /home/magraina/projects/truckLightAndFunction/build/sketch/readPPMdata.h \
- /home/magraina/projects/truckLightAndFunction/build/sketch/lightFunctions.h \
- /home/magraina/projects/truckLightAndFunction/build/sketch/debugging.h \
- /home/magraina/projects/truckLightAndFunction/build/sketch/serialCommMaster.h \
  /home/magraina/.arduino15/packages/arduino/hardware/avr/1.8.5/cores/arduino/HardwareSerial.h

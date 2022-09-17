@@ -40,6 +40,11 @@
     "Includepath": null
   },
   {
+    "Sourcefile": "/home/magraina/projects/truckLightAndFunction/build/sketch/serialCommMaster.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
     "Sourcefile": "/home/magraina/projects/truckLightAndFunction/build/sketch/tools.cpp",
     "Include": "",
     "Includepath": null
