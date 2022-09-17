@@ -84,6 +84,8 @@ Lights hazardLight;
 Lights beaconLight;
 Lights auxLight;
 
+bool serialIsSent;
+
 
 void setup() {
  //SoftPWMBegin();
@@ -93,7 +95,7 @@ void setup() {
 	* Setup Inputs 
 
 	************************************/
-# 71 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+# 73 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
  pinMode(2 /*PPM Signal from Remote Control Extension | Interrupt Needed*/, 0x2);
  pinMode(3 /*PPM Signal from Remote Control Extension | Interrupt Needed*/, 0x2);
  pinMode(7 /*Steering Servo Signal from Receiver  | Interrupt Needed*/, 0x2);
@@ -104,7 +106,7 @@ void setup() {
 	* Setup Outputs 
 
 	************************************/
-# 79 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+# 81 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
  pinMode(A0 /*Parking light output pin*/, 0x1);
  pinMode(10 /*Head light low beam output pin | PWM*/, 0x1);
  pinMode(11 /*Head light high beam output pin*/, 0x1);
@@ -121,9 +123,10 @@ void setup() {
 	* Setup Functions
 
 	************************************/
-# 93 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+# 95 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
  initInterrupts(2 /*PPM Signal from Remote Control Extension | Interrupt Needed*/, 3 /*PPM Signal from Remote Control Extension | Interrupt Needed*/, 7 /*Steering Servo Signal from Receiver  | Interrupt Needed*/);
  //debuggingInit();
+ Serial.begin(9600);
 }
 
 void loop() { // put your main code here, to run repeatedly:
@@ -158,9 +161,80 @@ void loop() { // put your main code here, to run repeatedly:
 
  parkLight.out = directlyToOutput(parkLight.state);
  lowBeamLight.out = directlyToOutput(lowBeamLight.state);
- highBeamLight.out = directlyToOutput(highBeamLight.state);
- highBeamLightFlash.out = highBeamFlash(highBeamLightFlash.state, 500 /* Time frequency for head beam to flash*/);
+ highBeamLight.out = highBeamFlash(highBeamLight.state, highBeamLightFlash.state);
  fogLight.out = directlyToOutput(fogLight.state);
  beaconLight.out = directlyToOutput(beaconLight.state);
  auxLight.out = directlyToOutput(auxLight.state);
+ setFlasherLight(leftFlashLight.state, rightFlashLight.state, hazardLight.state, &leftFlashLight.out, &rightFlashLight.out);
+
+ digitalWrite(A0 /*Parking light output pin*/, parkLight.out);
+ digitalWrite(10 /*Head light low beam output pin | PWM*/, lowBeamLight.out);
+ digitalWrite(11 /*Head light high beam output pin*/, highBeamLight.out);
+ digitalWrite(A1 /*Fog light output pin*/, fogLight.out);
+ digitalWrite(A3 /*Reserved for Special Auxiliary Light*/, auxLight.out);
+
+ if((millis()%1000 >= 500) && (serialIsSent == false)) {
+  Serial.println("--Multiswitch 1--");
+  Serial.print("lowerSwitch 1: ");
+  Serial.println(channel1.lowerSwitch[1]);
+  Serial.print("upperSwitch 3: ");
+  Serial.println(channel1.upperSwitch[3]);
+  Serial.println("--Multiswitch 2--");
+  Serial.print("lowerSwitch 0: ");
+  Serial.println(channel2.lowerSwitch[0]);
+  Serial.print("upperSwitch 0: ");
+  Serial.println(channel2.upperSwitch[0]);
+  Serial.print("upperSwitch 1: ");
+  Serial.println(channel2.upperSwitch[1]);
+  Serial.print("upperSwitch 2: ");
+  Serial.println(channel2.upperSwitch[2]);
+  Serial.print("upperSwitch 3: ");
+  Serial.println(channel2.upperSwitch[3]);
+  Serial.println("-- Light State --");
+  Serial.print("parkLight: ");
+  Serial.println(parkLight.state);
+  Serial.print("lowBeamLight: ");
+  Serial.println(lowBeamLight.state);
+  Serial.print("highBeamLight: ");
+  Serial.println(highBeamLight.state);
+  Serial.print("highBeamLightFlash: ");
+  Serial.println(highBeamLightFlash.state);
+  Serial.print("fogLight: ");
+  Serial.println(fogLight.state);
+  Serial.print("beaconLight: ");
+  Serial.println(beaconLight.state);
+  Serial.print("auxLight: ");
+  Serial.println(auxLight.state);
+  Serial.print("hazardLight: ");
+  Serial.println(hazardLight.state);
+  Serial.print("leftFlashLight: ");
+  Serial.println(leftFlashLight.state);
+  Serial.print("rightFlashLight: ");
+  Serial.println(rightFlashLight.state);
+  Serial.println("-- Light Out --");
+  Serial.print("parkLight: ");
+  Serial.println(parkLight.out);
+  Serial.print("lowBeamLight: ");
+  Serial.println(lowBeamLight.out);
+  Serial.print("highBeamLight: ");
+  Serial.println(highBeamLight.out);
+  Serial.print("highBeamLightFlash: ");
+  Serial.println(highBeamLightFlash.out);
+  Serial.print("fogLight: ");
+  Serial.println(fogLight.out);
+  Serial.print("beaconLight: ");
+  Serial.println(beaconLight.out);
+  Serial.print("auxLight: ");
+  Serial.println(auxLight.out);
+  Serial.print("hazardLight: ");
+  Serial.println(hazardLight.out);
+  Serial.print("leftFlashLight: ");
+  Serial.println(leftFlashLight.out);
+  Serial.print("rightFlashLight: ");
+  Serial.println(rightFlashLight.out);
+  Serial.println("-------End-------");
+  serialIsSent = true;
+ } else if((millis()%1000 < 500) && (serialIsSent == true)) {
+  serialIsSent = false;
+ }
 }

@@ -107,7 +107,7 @@ bool checkChannelStatus(uint8_t multiSwitch) {
 
 
 uint16_t getChannel1Poti(uint8_t channel, uint8_t fallbackValue) {
-	if(checkChannelStatus(MULTI1)) return fallbackValue;				// return fallback if channel does not respond
+	if(!checkChannelStatus(MULTI1)) return fallbackValue;				// return fallback if channel does not respond
 	switch (channel) {
 	case 0:
 		return ppmServoToRange(filter[0].filterValue(interrupt[MULTI1].buffer[0]));
@@ -130,7 +130,7 @@ uint16_t getChannel1Poti(uint8_t channel, uint8_t fallbackValue) {
 // 16:59:31.637 -> 1528	row above:		4 button/switch (up/mid/down 1000/1500/2000)
 
 uint8_t getChannel1Switch(uint8_t channel, uint8_t fallbackValue) {
-	if(checkChannelStatus(MULTI1)) return fallbackValue;				// return fallback if channel does not respond
+	if(!checkChannelStatus(MULTI1)) return fallbackValue;				// return fallback if channel does not respond
 	switch (channel) {
 	case 0:
 		return ppmToSwitchStages(interrupt[MULTI1].buffer[2]);
@@ -165,7 +165,7 @@ uint8_t getChannel1Switch(uint8_t channel, uint8_t fallbackValue) {
 	// 16:59:31.637 -> 1696	row below:	1 switch (up/mid/down 1700/1700/1000)
 
 uint8_t getChannel2Switch(uint8_t channel, uint8_t fallbackValue) {
-	if(checkChannelStatus(MULTI2)) return fallbackValue;				// return fallback if channel does not respond
+	if(!checkChannelStatus(MULTI2)) return fallbackValue;				// return fallback if channel does not respond
 	switch (channel) {
 	case 0:
 		return ppmToSwitchStages(interrupt[MULTI2].buffer[0], PPM_INVERT);

@@ -15,6 +15,7 @@
 
 #include "lightFunctions.h"
 #include "tools.h"
+#include <SoftPWM.h>							// https://github.com/bhagman/SoftPWM
 
 
 Blink flasher[2];
@@ -26,8 +27,85 @@ bool directlyToOutput(bool lightState) {
 bool highBeamFlash(bool lightState, bool lightFlashState, uint16_t flashFrequency) {
 	if(lightState) return true;
 	if(lightFlashState) return flasher[0].blink(flashFrequency);
-	// else the reset
+	// else then reset
 	flasher[0].resetBlink();
 	return false;
 }
 
+void setFlasherLight(bool leftFlasherState, bool rightFlasherState, bool hazardState, bool* outLeftLight, bool* outRightLight, uint16_t flashFrequency) {
+	if(hazardState) {
+		bool blinkerState = flasher[1].blink(flashFrequency);
+		*outLeftLight = blinkerState;
+		*outRightLight = blinkerState;
+	} else if(leftFlasherState) {
+		*outLeftLight = flasher[1].blink(flashFrequency);
+		*outRightLight = false;
+	} else if(rightFlasherState) {
+		*outLeftLight = false;
+		*outRightLight = flasher[1].blink(flashFrequency);
+	} else if((*outLeftLight || *outRightLight) && !flasher[1].blink(flashFrequency)) {
+		*outLeftLight = false;
+		*outRightLight = false;
+	} else if (!*outLeftLight && !*outRightLight) {
+		flasher[1].resetBlink();
+	}
+}
+
+void initLightOutput() {
+	SoftPWMBegin(); 					//Init Soft PWM Lib
+}
+
+void setupLightOutput(uint8_t pin, uint16_t fadeOnTime, uint16_t fadeOffTime) {
+	SoftPWMSet(pin, SOFT_PWM_LOW);     	//Create and set pin to 0
+	SoftPWMSetFadeTime(pin, fadeOnTime, fadeOffTime); //Set Fade on/off time for output
+}
+
+void setBooleanLight(uint8_t pin, bool state, uint8_t highValue = SOFT_PWM_HIGH) {
+	if(state) SoftPWMSet(pin, highValue);
+	if(!state) SoftPWMSet(pin, SOFT_PWM_LOW);
+}
+
+void setCombinedHeadlightAll(uint8_t pin,
+							uint8_t parkingState,
+							uint8_t lowBeamState,
+							uint8_t highBeamState,
+							uint8_t parkingOutValue,
+							uint8_t lowBeamOutValue,
+							uint8_t highBeamOutValue) {
+	if(highBeamState) {
+		SoftPWMSet(pin, highBeamOutValue);
+	} else if(lowBeamState) {
+		SoftPWMSet(pin, lowBeamOutValue);
+	} else if(parkingState) {
+		SoftPWMSet(pin, parkingOutValue);
+	} else {
+		SoftPWMSet(pin, SOFT_PWM_LOW);
+	}
+}
+void setCombinedHeadlightHighOnly(uint8_t pin,
+							uint8_t lowBeamState,
+							uint8_t highBeamState,
+							uint8_t lowBeamOutValue,
+							uint8_t highBeamOutValue) {
+	if(highBeamState) {
+		SoftPWMSet(pin, highBeamOutValue);
+	} else if(lowBeamState) {
+		SoftPWMSet(pin, lowBeamOutValue);
+	} else {
+		SoftPWMSet(pin, SOFT_PWM_LOW);
+	}
+}
+
+void setCombinedHeadlightParkOnly(uint8_t pin,
+							uint8_t parkingState,
+							uint8_t lowBeamState,
+							uint8_t parkingOutValue,
+							uint8_t lowBeamOutValue) {
+	if(lowBeamState) {
+		SoftPWMSet(pin, lowBeamOutValue);
+	} else if(parkingState) {
+		SoftPWMSet(pin, parkingOutValue);
+	} else {
+		SoftPWMSet(pin, SOFT_PWM_LOW);
+	}
+}

@@ -18,6 +18,10 @@
 
 #include "Arduino.h"
 
+#define DIRECTION_UP 1
+#define DIRECTION_MID 2
+#define DIRECTION_DOWN 3
+
 void initInterrupts(uint8_t pinPPMChannel1, uint8_t pinPPMChannel2, uint8_t pinServoChannel);	// Function to attach all interrupt service routines (ISR)
 void ppmMultiInterrupt1();							// ISR for interrupt of first PPM signal
 void ppmMultiInterrupt2();							// ISR for interrupt of second PPM signal

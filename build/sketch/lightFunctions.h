@@ -20,6 +20,7 @@
 #include "Arduino.h"
 
 bool directlyToOutput(bool lightState);
-bool highBeamFlash(bool lightState, uint16_t flashFrequency);
+bool highBeamFlash(bool lightState, bool lightFlashState);
+void setFlasherLight(bool leftFlasherState, bool rightFlasherState, bool hazardState, bool* outLeftLight, bool* outRightLight);
 
 #endif

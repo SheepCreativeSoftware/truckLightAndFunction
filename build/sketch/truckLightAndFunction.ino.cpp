@@ -63,12 +63,14 @@ Lights hazardLight;
 Lights beaconLight;
 Lights auxLight;
 
+bool serialIsSent;
 
-#line 65 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+
+#line 67 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
 void setup();
-#line 97 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+#line 100 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
 void loop();
-#line 65 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
+#line 67 "/home/magraina/projects/truckLightAndFunction/truckLightAndFunction.ino"
 void setup() {
 	//SoftPWMBegin();
 	// put your setup code here, to run once:
@@ -99,6 +101,7 @@ void setup() {
 	************************************/
 	initInterrupts(inFunction1ControlPPM, inFunction2ControlPPM, inSteerControlPPM);
 	//debuggingInit();
+	SerialUSB.begin(9600);
 }
 
 void loop() {                             // put your main code here, to run repeatedly:
@@ -133,9 +136,80 @@ void loop() {                             // put your main code here, to run rep
 
 	parkLight.out = directlyToOutput(parkLight.state);
 	lowBeamLight.out = directlyToOutput(lowBeamLight.state);
-	highBeamLight.out = directlyToOutput(highBeamLight.state);
-	highBeamLightFlash.out = highBeamFlash(highBeamLightFlash.state, HIGH_BEAM_FLASH_FREQUENCY);
+	highBeamLight.out = highBeamFlash(highBeamLight.state, highBeamLightFlash.state);
 	fogLight.out = directlyToOutput(fogLight.state);
 	beaconLight.out = directlyToOutput(beaconLight.state);
 	auxLight.out = directlyToOutput(auxLight.state);
+	setFlasherLight(leftFlashLight.state, rightFlashLight.state, hazardLight.state, &leftFlashLight.out, &rightFlashLight.out);
+
+	digitalWrite(outParkingLight, parkLight.out);
+	digitalWrite(outLowBeamLight, lowBeamLight.out);
+	digitalWrite(outHighBeamLight, highBeamLight.out);
+	digitalWrite(outFogLight, fogLight.out);
+	digitalWrite(outAuxLight, auxLight.out);
+
+	if((millis()%1000 >= 500) && (serialIsSent == false)) {
+		SerialUSB.println("--Multiswitch 1--");
+		SerialUSB.print("lowerSwitch 1: ");
+		SerialUSB.println(channel1.lowerSwitch[1]);
+		SerialUSB.print("upperSwitch 3: ");
+		SerialUSB.println(channel1.upperSwitch[3]);
+		SerialUSB.println("--Multiswitch 2--");
+		SerialUSB.print("lowerSwitch 0: ");
+		SerialUSB.println(channel2.lowerSwitch[0]);
+		SerialUSB.print("upperSwitch 0: ");
+		SerialUSB.println(channel2.upperSwitch[0]);
+		SerialUSB.print("upperSwitch 1: ");
+		SerialUSB.println(channel2.upperSwitch[1]);
+		SerialUSB.print("upperSwitch 2: ");
+		SerialUSB.println(channel2.upperSwitch[2]);
+		SerialUSB.print("upperSwitch 3: ");
+		SerialUSB.println(channel2.upperSwitch[3]);
+		SerialUSB.println("-- Light State --");
+		SerialUSB.print("parkLight: ");
+		SerialUSB.println(parkLight.state);
+		SerialUSB.print("lowBeamLight: ");
+		SerialUSB.println(lowBeamLight.state);
+		SerialUSB.print("highBeamLight: ");
+		SerialUSB.println(highBeamLight.state);
+		SerialUSB.print("highBeamLightFlash: ");
+		SerialUSB.println(highBeamLightFlash.state);
+		SerialUSB.print("fogLight: ");
+		SerialUSB.println(fogLight.state);
+		SerialUSB.print("beaconLight: ");
+		SerialUSB.println(beaconLight.state);
+		SerialUSB.print("auxLight: ");
+		SerialUSB.println(auxLight.state);
+		SerialUSB.print("hazardLight: ");
+		SerialUSB.println(hazardLight.state);
+		SerialUSB.print("leftFlashLight: ");
+		SerialUSB.println(leftFlashLight.state);
+		SerialUSB.print("rightFlashLight: ");
+		SerialUSB.println(rightFlashLight.state);
+		SerialUSB.println("-- Light Out --");
+		SerialUSB.print("parkLight: ");
+		SerialUSB.println(parkLight.out);
+		SerialUSB.print("lowBeamLight: ");
+		SerialUSB.println(lowBeamLight.out);
+		SerialUSB.print("highBeamLight: ");
+		SerialUSB.println(highBeamLight.out);
+		SerialUSB.print("highBeamLightFlash: ");
+		SerialUSB.println(highBeamLightFlash.out);
+		SerialUSB.print("fogLight: ");
+		SerialUSB.println(fogLight.out);
+		SerialUSB.print("beaconLight: ");
+		SerialUSB.println(beaconLight.out);
+		SerialUSB.print("auxLight: ");
+		SerialUSB.println(auxLight.out);
+		SerialUSB.print("hazardLight: ");
+		SerialUSB.println(hazardLight.out);
+		SerialUSB.print("leftFlashLight: ");
+		SerialUSB.println(leftFlashLight.out);
+		SerialUSB.print("rightFlashLight: ");
+		SerialUSB.println(rightFlashLight.out);
+		SerialUSB.println("-------End-------");
+		serialIsSent = true;
+	} else if((millis()%1000 < 500) && (serialIsSent == true)) {
+		serialIsSent = false;
+	}
 }

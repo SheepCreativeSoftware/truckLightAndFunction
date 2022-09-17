@@ -52,7 +52,7 @@ uint8_t ppm2ToSwitch3Stages(uint16_t signal1, uint16_t signal2) {
 		return DIRECTION_UP;										//return 1 if signal is at lower end
 	} else if((signal2 >= 750) && (signal2 <= 1250)) {	//else if signal is at 2000ms ±250ms
 		return DIRECTION_DOWN;										//return 3 if signal is at upper end
-	} else if((signal1 <= 2000) && (signal2 <= 2000)) {	//else if signal is at 1500ms ±250ms
+	} else if((signal1 >= 1500) && (signal2 >= 1500) && (signal1 <= 2000) && (signal2 <= 2000)) {	//else if signal is at 1500ms ±250ms
 		return DIRECTION_MID;										//return 2 if signal is at middle
 	} else {											//else signal is <750 or >2250
 		return 0;										//return 0 cause signal is out of bound | error

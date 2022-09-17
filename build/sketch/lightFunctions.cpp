@@ -17,6 +17,13 @@
 #include "lightFunctions.h"
 #include "tools.h"
 
+#ifndef BLINKER_FREQUENCY
+#define BLINKER_FREQUENCY 1000
+#endif
+
+#ifndef HIGH_BEAM_FLASH_FREQUENCY
+#define HIGH_BEAM_FLASH_FREQUENCY 500
+#endif
 
 Blink flasher[2];
 
@@ -24,10 +31,27 @@ bool directlyToOutput(bool lightState) {
 	return lightState;
 }
 
-bool highBeamFlash(bool lightState, uint16_t flashFrequency) {
-	if(lightState) return flasher[0].blink(flashFrequency);
-	// else the reset
+bool highBeamFlash(bool lightState, bool lightFlashState) {
+	if(lightState) return true;
+	if(lightFlashState) return flasher[0].blink(HIGH_BEAM_FLASH_FREQUENCY);
+	// else then reset
 	flasher[0].resetBlink();
 	return false;
+}
+
+void setFlasherLight(bool leftFlasherState, bool rightFlasherState, bool hazardState, bool* outLeftLight, bool* outRightLight) {
+	if(hazardState) {
+		bool blinkerState = flasher[1].blink(BLINKER_FREQUENCY);
+		*outLeftLight = blinkerState;
+		*outRightLight = blinkerState;
+	} else if(leftFlasherState) {
+		*outLeftLight = flasher[1].blink(BLINKER_FREQUENCY);
+	} else if(rightFlasherState) {
+		*outRightLight = flasher[1].blink(BLINKER_FREQUENCY);
+	} else if((*outLeftLight || *outRightLight) && flasher[1].blink(BLINKER_FREQUENCY)) {
+		*outLeftLight = false;
+		*outRightLight = false;
+		flasher[1].resetBlink();
+	}
 }
 

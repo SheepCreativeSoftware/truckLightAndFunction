@@ -16,11 +16,21 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-#define COUNTRY_OPTION "EU"					//Setup Region EU or US for Truck
-#define HEADLIGHT_COMBINE false				//High => Low and High Beam on both Head Light output Pins | False => Seperate Pins for High and Low Beam 
-#define HIGH_BEAM_FLASH_FREQUENCY 500		// Time frequency for head beam to flash
-#define FLASHER_FLASH_FREQUENCY 1000		// Time frequency for Flasher to flash
-#define SERIAL_COM false					//Activate Communication to other modules via Serial Port
+#define COUNTRY_OPTION EU					// Setup Region EU or US for Truck
+#define HEADLIGHT_IS_PARKING true			// Head light is also parking light (dimmed)
+#define HEADLIGHT_IS_HIGHBEAM false			// High => Low and High Beam on both Head Light output Pins | False => Seperate Pins for High and Low Beam 
+#define HEADLIGHT_PARKING_VALUE 5			// 0-255 Value for combined operation of Headlight
+#define HEADLIGHT_LOWBEAM_VALUE 255			// 0-255 Value for combined operation of Headlight
+#define HEADLIGHT_HIGHBEAM_VALUE 255		// 0-255 Value for combined operation of Headlight
+#define HIGH_BEAM_FLASH_FREQUENCY 800		// Time frequency for head beam to flash
+#define BLINKER_FREQUENCY 1000				// Time frequency for Flasher to flash
+#define LIGHT_FADE_ON_TIME 200				// 200ms Fade on time for the Light
+#define LIGHT_FADE_OFF_TIME 200				// 200ms Fade off time for the Light
+#define PARKING_DIMM 100					// 0-255 Value for dimming the parking light
+#define NORMAL_LIGHT_DIMMING 255			// 0-255 Value for all light when active
+#define STARTER_DIMMING_MIN 50				// 0-255 MIN Value for all light when active starter is activ
+#define STARTER_DIMMING_MAX 150				// 0-255 MAX Value for all light when active starter is activ
+#define SERIAL_COM false					// Activate Communication to other modules via Serial Port
 #if (SERIAL_COM == true)
 	#define TRUCK_ADDRESS 1					//Serial Adress for this Module: Truck
 	#define BEACON_ADDRESS 2				//Serial Adress for Module: Beacon Lights Extension
