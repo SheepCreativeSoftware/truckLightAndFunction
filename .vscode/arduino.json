@@ -1,5 +1,8 @@
 {
     "board": "arduino:avr:micro",
     "programmer": "arduino:avrispmkii",
-    "sketch": "truckLightAndFunction.ino"
+    "port": "/dev/ttyACM0",
+    "sketch": "truckLightAndFunction.ino",
+    "output": "./build",
+    "intelliSenseGen": "global"
 }

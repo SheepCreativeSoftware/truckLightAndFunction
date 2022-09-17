@@ -1,10 +1,24 @@
 Release Notes
 
+v0.1.0
+- Changed complete mechanism of the programm
+- Map Switches to a function
+- Separated and Restructured files
+- mapped functions to switches and read value from the switches
+- removed old mapping function
+- added light functions
+- added much more config settings
+- added outputs with fading effect
+- tested in real application
+- added function which dimms the lights if starter is active
+- added and tested serial communication
+
 v0.0.11
 - test new functions
 - fix datatypes in ppmPoti function
 - add debuging for channel evaluation
 - add filter to ppPoti evaluation
+
 
 v0.0.9 09.06.2020
 - added filter function

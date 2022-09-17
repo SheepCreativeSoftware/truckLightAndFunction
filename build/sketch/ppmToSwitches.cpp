@@ -1,7 +1,5 @@
+#line 1 "/home/magraina/projects/truckLightAndFunction/ppmToSwitches.cpp"
 /************************************ 
- * truckLightAndFunction v0.0.11
- * Date: 10.06.2020 | 00:25
- * <Truck Light and function module>
  * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
  * This program is free software: you can redistribute it and/or modify it 
@@ -15,9 +13,7 @@
  * You should have received a copy of the GNU General Public License along with this program. 
  * If not, see <https://www.gnu.org/licenses/>.
  ************************************/
-#include "Arduino.h"
-#include <SoftPWM.h>							//https://github.com/bhagman/SoftPWM
-#include "truckFunctions.h"
+#include "ppmToSwitches.h"
 
 /***************************************************
  * PPM Signal have a range from 1000ms to 2000ms
@@ -57,7 +53,7 @@ uint8_t ppm2ToSwitch3Stages(uint16_t signal1, uint16_t signal2) {
 		return DIRECTION_UP;										//return 1 if signal is at lower end
 	} else if((signal2 >= 750) && (signal2 <= 1250)) {	//else if signal is at 2000ms ±250ms
 		return DIRECTION_DOWN;										//return 3 if signal is at upper end
-	} else if((signal1 <= 2000) && (signal2 <= 2000)) {	//else if signal is at 1500ms ±250ms
+	} else if((signal1 >= 1500) && (signal2 >= 1500) && (signal1 <= 2000) && (signal2 <= 2000)) {	//else if signal is at 1500ms ±250ms
 		return DIRECTION_MID;										//return 2 if signal is at middle
 	} else {											//else signal is <750 or >2250
 		return 0;										//return 0 cause signal is out of bound | error
@@ -81,59 +77,3 @@ int32_t ppmServoToRange(int32_t signal, int32_t inMin, int32_t inMax, int32_t ou
 		return 0;
 	}
 }
-
-bool EdgeEvaluation::readEdge(bool input){
-	if((input) && (!lastEdge)){
-		lastEdge = true;
-		return true;
-	} else if((!input) && (lastEdge)){
-		lastEdge = false;
-		return false;
-	} 
-	return false;
-}
-
-int16_t Filter::filterValue(int16_t input, int16_t filterFactor, uint16_t filterTime){
-	if((millis()%filterTime >= filterTime/2) && (doneFilter == false)) {
-		lastValue = (input - lastValue) / filterFactor + lastValue; 
-		doneFilter = true;
-	} else if((millis()%filterTime < filterTime/2) && (doneFilter == true)) {
-		doneFilter = false;
-	}
-	
-	return lastValue;
-}
-
-/*
-void outputDefine::outputMode(int outPin, unsigned char modus){
-	pinMode(outPin, OUTPUT);
-	outPinModus = modus;
-	switch (modus) {
-		case OUT_HARD_PWM:
-		analogWrite(outPin, 0);
-		break;
-		case OUT_SOFT_PWM:
-		SoftPWMSet(outPin, 0);
-		break;
-		case OUT_DIGITAL:
-		//nothing to do
-		break;
-		default:
-		//error
-		break;		
-	}
-}
-void outputDefine::outputMode(int outPin, unsigned char modus, int fadeUpTime, int fadeDownTime){
-	pinMode(outPin, OUTPUT);
-	outPinModus = modus;
-	switch (modus) {
-		case OUT_SOFT_FADE:
-		SoftPWMSet(outPin, 0);     									//Create and set pin to 0
-		SoftPWMSetFadeTime(outPin, fadeUpTime, fadeDownTime);       //Set fade time for pin 1000 ms fade-up time, and 1000 ms fade-down time
-		break;
-		default:
-		//error
-		break;		
-	}
-}
-*/
