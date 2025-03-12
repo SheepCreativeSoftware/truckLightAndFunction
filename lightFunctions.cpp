@@ -49,6 +49,7 @@ void setFlasherLight(bool leftFlasherState, bool rightFlasherState, bool hazardS
 	} else if (!*outLeftLight && !*outRightLight) {
 		flasher[1].resetBlink();
 	}
+
 }
 
 void initLightOutput() {
@@ -113,4 +114,14 @@ void setCombinedHeadlightParkOnly(uint8_t pin,
 uint8_t starterDimming(bool active, uint8_t defaultDimValue, uint8_t divisor, uint8_t multiplier1) {
 	if(!active) return defaultDimValue;
 	if(active) return defaultDimValue / divisor * multiplier1;
+}
+
+void setBrakingWithPark(uint8_t pin, uint8_t parkState, uint8_t brakeState, uint8_t parkDimming, uint8_t highValue = SOFT_PWM_HIGH) {
+	if(brakeState) {
+		SoftPWMSet(pin, highValue);
+	} else if(parkState) {
+		SoftPWMSet(pin, parkDimming);
+	} else {
+		SoftPWMSet(pin, SOFT_PWM_LOW);
+	}
 }

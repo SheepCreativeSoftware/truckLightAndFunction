@@ -56,6 +56,10 @@ Lights highBeamLight;
 Lights highBeamLightFlash;
 Lights leftFlashLight;
 Lights rightFlashLight;
+#if (COUNTRY_OPTION == US)
+Lights leftRearFlashLight;
+Lights rightRearFlashLight;
+#endif
 Lights fogLight;
 Lights hazardLight;
 Lights beaconLight;
@@ -114,7 +118,7 @@ void setup() {
 	debuggingInit(DEBUGLEVEL, outStatusLed);
 	#endif
 
-	#if (SERIAL_COM)
+	#if (SERIAL_COM == true)
 	serialConfigure(&SerialHW,			// Serial interface on arduino
 				19200,					// Baudrate
 				SERIAL_8N1,				// e.g. SERIAL_8N1 | start bit, data bit, stop bit
@@ -226,15 +230,27 @@ void loop() {                             // put your main code here, to run rep
 	setBooleanLight(outFrontLeftFlashLight, leftFlashLight.out, normalDimming);
 	setBooleanLight(outFrontRightFlashLight, rightFlashLight.out, normalDimming);
 	setBooleanLight(outReverseLight, reverseLight.out, normalDimming);
-	setBooleanLight(outBrakeLight, brakeLight.out, normalDimming);
 
 	#if (COUNTRY_OPTION == EU)
 	setBooleanLight(outRearLeftFlashLight, leftFlashLight.out, normalDimming);
 	setBooleanLight(outRearRightFlashLight, rightFlashLight.out, normalDimming);
 	setBooleanLight(outBrakeLight, brakeLight.out, normalDimming);
-	#endif
-	setBooleanLight(outReverseLight, reverseLight.out, normalDimming);
+  #elif (COUNTRY_OPTION == US)
+  if (leftFlashLight.state && hazardLight.state) {
+    setBooleanLight(outRearLeftFlashLight, leftFlashLight.out, normalDimming);
+  } else if (leftFlashLight.out == false) {
+    setBrakingWithPark(outRearLeftFlashLight, parkLight.state, brakeLight.state, parkDimming, normalDimming);
+  }
+  if (rightFlashLight.state && hazardLight.state) {
+    setBooleanLight(outRearRightFlashLight, rightFlashLight.out, normalDimming);
+  } else if (rightFlashLight.out == false) {
+    setBrakingWithPark(outRearRightFlashLight, parkLight.state, brakeLight.state, parkDimming, normalDimming);
+  }
 
+  setBrakingWithPark(outBrakeLight, parkLight.state, brakeLight.state, parkDimming, normalDimming);
+	#endif
+
+  #if (SERIAL_COM == true)
 	/*
 	 * Setup serial communication
 	 */
@@ -259,6 +275,7 @@ void loop() {                             // put your main code here, to run rep
 	setLightData(DIMMLIGHTS, starterDiming);
 	//setServoData();
 	serialUpdate();
+  #endif
 
 	/*
 	 * Setup Debugging
@@ -315,6 +332,6 @@ void loop() {                             // put your main code here, to run rep
 
 	#if (DEBUGLEVEL == 5)
 	SerialUSB.println(starterDiming);
-	//SerialUSB.println(digitalRead(inSoundPPM));
+	SerialUSB.println(digitalRead(inSoundPPM));
 	#endif
 }

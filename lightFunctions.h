@@ -48,4 +48,6 @@ void setCombinedHeadlightParkOnly(uint8_t pin,
 							uint8_t lowBeamOutValue);
 uint8_t starterDimming(bool active, uint8_t defaultDimValue, uint8_t divisor, uint8_t multiplier1);
 
+void setBrakingWithPark(uint8_t pin, uint8_t parkState, uint8_t brakeState, uint8_t parkDimming, uint8_t highValue = SOFT_PWM_HIGH);
+
 #endif

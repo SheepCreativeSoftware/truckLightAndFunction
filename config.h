@@ -16,7 +16,7 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-#define COUNTRY_OPTION EU					// Setup Region EU or US for Truck
+#define COUNTRY_OPTION US					// Setup Region EU or US for Truck
 #define HEADLIGHT_IS_PARKING true			// Head light is also parking light (dimmed)
 #define HEADLIGHT_IS_HIGHBEAM false			// High => Low and High Beam on both Head Light output Pins | False => Seperate Pins for High and Low Beam 
 #define HEADLIGHT_PARKING_VALUE 5			// 0-255 Value for combined operation of Headlight
@@ -30,11 +30,11 @@
 #define NORMAL_LIGHT_DIMMING 255			// 0-255 Value for all light when active
 #define STARTER_DIMM_DIVISOR 5				// Divisor for Dimming function
 #define STARTER_DIMM_MULTI1 2				// 0-255 MAX Value for all light when active starter is activ
-#define SERIAL_COM true						// Activate Communication to other modules via Serial Port
+#define SERIAL_COM false						// Activate Communication to other modules via Serial Port
 #if (SERIAL_COM == true)
 	#define SERIAL_TURNAROUND 20
 #endif
 //Change this value for different debuging levels
-#define DEBUGLEVEL 6						//1 = Status LED | >2 = Serial Monitor
+#define DEBUGLEVEL 1						//1 = Status LED | >2 = Serial Monitor
 
 #endif
