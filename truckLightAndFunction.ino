@@ -56,10 +56,6 @@ Lights highBeamLight;
 Lights highBeamLightFlash;
 Lights leftFlashLight;
 Lights rightFlashLight;
-#if (COUNTRY_OPTION == US)
-Lights leftRearFlashLight;
-Lights rightRearFlashLight;
-#endif
 Lights fogLight;
 Lights hazardLight;
 Lights beaconLight;
@@ -235,13 +231,15 @@ void loop() {                             // put your main code here, to run rep
 	setBooleanLight(outRearLeftFlashLight, leftFlashLight.out, normalDimming);
 	setBooleanLight(outRearRightFlashLight, rightFlashLight.out, normalDimming);
 	setBooleanLight(outBrakeLight, brakeLight.out, normalDimming);
+
   #elif (COUNTRY_OPTION == US)
-  if (leftFlashLight.state && hazardLight.state) {
+  
+  if (leftFlashLight.state || hazardLight.state) {
     setBooleanLight(outRearLeftFlashLight, leftFlashLight.out, normalDimming);
   } else if (leftFlashLight.out == false) {
     setBrakingWithPark(outRearLeftFlashLight, parkLight.state, brakeLight.state, parkDimming, normalDimming);
   }
-  if (rightFlashLight.state && hazardLight.state) {
+  if (rightFlashLight.state || hazardLight.state) {
     setBooleanLight(outRearRightFlashLight, rightFlashLight.out, normalDimming);
   } else if (rightFlashLight.out == false) {
     setBrakingWithPark(outRearRightFlashLight, parkLight.state, brakeLight.state, parkDimming, normalDimming);

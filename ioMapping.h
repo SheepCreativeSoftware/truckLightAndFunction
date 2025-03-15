@@ -29,8 +29,8 @@
 #define inFunction2ControlPPM 3            //PPM Signal from Remote Control Extension | Interrupt Needed
 #define inSoundPPM 7               			//Soundmodul Servo Signal from Receiver  | Interrupt Needed
 // Pin 0+1+4 reserved for RS485!
-#define inBrakeSignal A4                   //Brake Signal from Servonaut Speed Controller
-#define inReverseSignal A5                 //Reverse Signal from Servonaut Speed Controller
+#define inReverseSignal A4                 //Reverse Signal from Servonaut Speed Controller
+#define inBrakeSignal A5                   //Brake Signal from Servonaut Speed Controller
 
 //Outputs
 #define outStatusLed 13					//Arduino status LED output Pin
