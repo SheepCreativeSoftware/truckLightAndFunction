@@ -20,7 +20,7 @@
 #define HEADLIGHT_IS_PARKING true			// Head light is also parking light (dimmed)
 #define HEADLIGHT_IS_HIGHBEAM true			// High => Low and High Beam on both Head Light output Pins | False => Seperate Pins for High and Low Beam 
 #define HEADLIGHT_PARKING_VALUE 5			// 0-255 Value for combined operation of Headlight
-#define HEADLIGHT_LOWBEAM_VALUE 150			// 0-255 Value for combined operation of Headlight
+#define HEADLIGHT_LOWBEAM_VALUE 100			// 0-255 Value for combined operation of Headlight
 #define HEADLIGHT_HIGHBEAM_VALUE 255		// 0-255 Value for combined operation of Headlight
 #define HIGH_BEAM_FLASH_FREQUENCY 800		// Time frequency for head beam to flash
 #define BLINKER_FREQUENCY 1000				// Time frequency for Flasher to flash
@@ -36,6 +36,6 @@
 	#define SERIAL_TURNAROUND 20
 #endif
 //Change this value for different debuging levels
-#define DEBUGLEVEL 3						//1 = Status LED | >2 = Serial Monitor
+#define DEBUGLEVEL 1						//1 = Status LED | >2 = Serial Monitor
 
 #endif
