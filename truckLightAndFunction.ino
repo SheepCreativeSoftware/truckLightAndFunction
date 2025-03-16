@@ -188,6 +188,7 @@ void loop() {                             // put your main code here, to run rep
 	 */
 	uint8_t normalDimming = starterDimming(starterDiming, SOFT_PWM_HIGH, STARTER_DIMM_DIVISOR, STARTER_DIMM_MULTI1);
 	uint8_t parkDimming = starterDimming(starterDiming, PARKING_DIMM, STARTER_DIMM_DIVISOR, STARTER_DIMM_MULTI1);
+  uint8_t parkDimmingRear = starterDimming(starterDiming, PARKING_DIMM_REAR, STARTER_DIMM_DIVISOR, STARTER_DIMM_MULTI1);
 
 	setBooleanLight(outParkingLight, parkLight.out, parkDimming);
 	#if (HEADLIGHT_IS_PARKING && HEADLIGHT_IS_HIGHBEAM)
@@ -237,15 +238,15 @@ void loop() {                             // put your main code here, to run rep
   if (leftFlashLight.state || hazardLight.state) {
     setBooleanLight(outRearLeftFlashLight, leftFlashLight.out, normalDimming);
   } else if (leftFlashLight.out == false) {
-    setBrakingWithPark(outRearLeftFlashLight, parkLight.state, brakeLight.state, parkDimming, normalDimming);
+    setBrakingWithPark(outRearLeftFlashLight, parkLight.state, brakeLight.state, parkDimmingRear, normalDimming);
   }
   if (rightFlashLight.state || hazardLight.state) {
     setBooleanLight(outRearRightFlashLight, rightFlashLight.out, normalDimming);
   } else if (rightFlashLight.out == false) {
-    setBrakingWithPark(outRearRightFlashLight, parkLight.state, brakeLight.state, parkDimming, normalDimming);
+    setBrakingWithPark(outRearRightFlashLight, parkLight.state, brakeLight.state, parkDimmingRear, normalDimming);
   }
 
-  setBrakingWithPark(outBrakeLight, parkLight.state, brakeLight.state, parkDimming, normalDimming);
+  setBrakingWithPark(outBrakeLight, parkLight.state, brakeLight.state, parkDimmingRear, normalDimming);
 	#endif
 
   #if (SERIAL_COM == true)
