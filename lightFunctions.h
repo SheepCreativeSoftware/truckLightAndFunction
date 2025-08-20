@@ -1,5 +1,5 @@
 /************************************ 
- * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
+ * Copyright (C) 2020-2025 Marina Egner <hello@sheepcs.de>
  *
  * This program is free software: you can redistribute it and/or modify it 
  * under the terms of the GNU General Public License as published by the 
@@ -23,7 +23,7 @@
 
 bool directlyToOutput(bool lightState);
 bool highBeamFlash(bool lightState, bool lightFlashState, uint16_t flashFrequency);
-void setFlasherLight(bool leftFlasherState, bool rightFlasherState, bool hazardState, bool* outLeftLight, bool* outRightLight, uint16_t flashFrequency);
+void setTurnIndicators(bool leftFlasherState, bool rightFlasherState, bool hazardState, bool* outLeftLight, bool* outRightLight, uint16_t flashFrequency);
 void initLightOutput();
 void setupLightOutput(uint8_t pin, uint16_t fadeOnTime, uint16_t fadeOffTime);
 void setBooleanLight(uint8_t pin, bool state, uint8_t highValue = SOFT_PWM_HIGH);
@@ -46,7 +46,6 @@ void setCombinedHeadlightParkOnly(uint8_t pin,
 							uint8_t lowBeamState,
 							uint8_t parkingOutValue,
 							uint8_t lowBeamOutValue);
-uint8_t starterDimming(bool active, uint8_t defaultDimValue, uint8_t divisor, uint8_t multiplier1);
 
 void setBrakingWithPark(uint8_t pin, uint8_t parkState, uint8_t brakeState, uint8_t parkDimming, uint8_t highValue = SOFT_PWM_HIGH);
 

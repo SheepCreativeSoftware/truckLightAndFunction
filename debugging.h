@@ -1,5 +1,5 @@
 /************************************ 
- * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
+ * Copyright (C) 2020-2025 Marina Egner <hello@sheepcs.de>
  *
  * This program is free software: you can redistribute it and/or modify it 
  * under the terms of the GNU General Public License as published by the 
@@ -48,8 +48,8 @@ void debugFunctionState(bool parkLight,
 						bool beaconLight,
 						bool auxLight,
 						bool hazardLight,
-						bool leftFlashLight,
-						bool rightFlashLight,
+						bool leftIndicatorLight,
+						bool rightIndicatorLight,
 						bool reverseLight,
 						bool brakeLight); 
 void debugFunctionOut(bool parkLight,
@@ -60,8 +60,8 @@ void debugFunctionOut(bool parkLight,
 						bool beaconLight,
 						bool auxLight,
 						bool hazardLight,
-						bool leftFlashLight,
-						bool rightFlashLight,
+						bool leftIndicatorLight,
+						bool rightIndicatorLight,
 						bool reverseLight,
 						bool brakeLight); 
 

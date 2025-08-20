@@ -2,7 +2,7 @@
  * Simple SerialBus Master Interface v0.0.1
  * Date: 30.08.2022 | 21:52
  * <Truck Light and function module>
- * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
+ * Copyright (C) 2020-2025 Marina Egner <hello@sheepcs.de>
  *
  * This program is free software: you can redistribute it and/or modify it 
  * under the terms of the GNU General Public License as published by the 
@@ -21,6 +21,17 @@
 
 #include "Arduino.h"
 #include "HardwareSerial.h"
+
+enum LightIdentifier {
+	PARK_LIGHT = 0,
+	BRAKE_LIGHT = 1,
+	REVERSE_LIGHT = 2,
+	RIGHT_BLINK = 3,
+	LEFT_BLINK = 4,
+	AUX_LIGHT = 5,
+	BEACON_LIGHT = 6,
+	DIMM_LIGHTS = 7
+};
 
 #define PARKLIGHT 0
 #define BRAKELIGHT 1

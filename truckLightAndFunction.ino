@@ -1,8 +1,8 @@
 /************************************ 
- * truckLightAndFunction v0.1.0
- * Date: 18.09.2022 | 00:06
+ * truckLightAndFunction v2.0.0
+ * Date: 20.08.2025
  * <Truck Light and function module>
- * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
+ * Copyright (C) 2020-2025 Marina Egner <hello@sheepcs.de>
  *
  * This program is free software: you can redistribute it and/or modify it 
  * under the terms of the GNU General Public License as published by the 
@@ -16,22 +16,19 @@
  * If not, see <https://www.gnu.org/licenses/>.
  ************************************/
 
-#define US 0
-#define EU 1
 /************************************
  * Configuration Programm
  ************************************/
 #include "config.h"								// Configuration File
-#include "ioMapping.h"							// IO Mapping File
+//#include "ioMapping.h"							// IO Mapping File
 /************************************
  * Include Module and Library Files
  ************************************/
 
 #include "readPPMdata.h"				// read Data from Buffer
 #include "lightFunctions.h"
-#if (DEBUGLEVEL >=1)
+#include "starterBrightnessAdjustment.h"
 #include "debugging.h"					// Handles debbuging info
-#endif
 #include "serialCommMaster.h"
 
 struct {
@@ -48,20 +45,23 @@ struct {
 struct Lights {
 	bool state;
 	bool out;
+	uint8_t brightness;
 };
 
 Lights parkLight;
 Lights lowBeamLight;
 Lights highBeamLight;
 Lights highBeamLightFlash;
-Lights leftFlashLight;
-Lights rightFlashLight;
+Lights leftIndicatorLight;
+Lights rightIndicatorLight;
 Lights fogLight;
 Lights hazardLight;
 Lights beaconLight;
 Lights auxLight;
 Lights brakeLight;
 Lights reverseLight;
+
+StarterAdjustedBrightness brightnessAdjust;
 
 uint8_t channel3Switch = 0;
 
@@ -71,9 +71,7 @@ uint8_t channel3Switch = 0;
 		#define SerialUSB SERIAL_PORT_MONITOR		//then define monitor port
 	#endif
 #else
-	#if (DEBUGLEVEL >1)								//if serial ports are the same debuging is not possible (for example on UNO)
-		#define DEBUGLEVEL 1						//do not change!!!
-	#endif
+	#define DEBUGLEVEL 1
 #endif
 #ifndef SerialHW									//if not allready defined
 	#define SerialHW SERIAL_PORT_HARDWARE			//then define hardware port
@@ -85,44 +83,107 @@ void setup() {
 	/************************************
 	* Setup Inputs 
 	************************************/
-	pinMode(inFunction1ControlPPM, INPUT_PULLUP);
-	pinMode(inFunction2ControlPPM, INPUT_PULLUP);
-	pinMode(inSoundPPM, INPUT);
-	pinMode(inBrakeSignal, INPUT_PULLUP);
-	pinMode(inReverseSignal, INPUT_PULLUP);
+	pinMode(vehicleConfig.ppmConfig.pinChannel1, INPUT_PULLUP);
+	pinMode(vehicleConfig.ppmConfig.pinChannel2, INPUT_PULLUP);
+	pinMode(vehicleConfig.ppmConfig.pinSoundChannel, INPUT);
+	pinMode(vehicleConfig.lightInputChannel.brakeSignal, INPUT_PULLUP);
+	pinMode(vehicleConfig.lightInputChannel.reverseSignal, INPUT_PULLUP);
 	/************************************
 	* Setup Outputs 
 	************************************/
 	initLightOutput();
-	setupLightOutput(outParkingLight, LIGHT_FADE_ON_TIME, LIGHT_FADE_OFF_TIME);
-	setupLightOutput(outLowBeamLight, LIGHT_FADE_ON_TIME, LIGHT_FADE_OFF_TIME);
-	setupLightOutput(outHighBeamLight, LIGHT_FADE_ON_TIME, LIGHT_FADE_OFF_TIME);
-	setupLightOutput(outFogLight, LIGHT_FADE_ON_TIME, LIGHT_FADE_OFF_TIME);
-	setupLightOutput(outFrontLeftFlashLight, LIGHT_FADE_ON_TIME, LIGHT_FADE_OFF_TIME);
-	setupLightOutput(outFrontRightFlashLight, LIGHT_FADE_ON_TIME, LIGHT_FADE_OFF_TIME);
-	setupLightOutput(outRearLeftFlashLight, LIGHT_FADE_ON_TIME, LIGHT_FADE_OFF_TIME);
-	setupLightOutput(outRearRightFlashLight, LIGHT_FADE_ON_TIME, LIGHT_FADE_OFF_TIME);
-	setupLightOutput(outReverseLight, LIGHT_FADE_ON_TIME, LIGHT_FADE_OFF_TIME);
-	setupLightOutput(outBrakeLight, LIGHT_FADE_ON_TIME, LIGHT_FADE_OFF_TIME);
-	setupLightOutput(outAuxLight, LIGHT_FADE_ON_TIME, LIGHT_FADE_OFF_TIME);
+	setupLightOutput(
+		vehicleConfig.parkingLight.outputPin,
+		vehicleConfig.parkingLight.fadeOnTime,
+		vehicleConfig.parkingLight.fadeOffTime
+	);
+	setupLightOutput(
+		vehicleConfig.lowBeamLight.outputPin,
+		vehicleConfig.lowBeamLight.fadeOnTime,
+		vehicleConfig.lowBeamLight.fadeOffTime
+	);
+	setupLightOutput(
+		vehicleConfig.highBeamLight.outputPin,
+		vehicleConfig.highBeamLight.fadeOnTime,
+		vehicleConfig.highBeamLight.fadeOffTime
+	);
+	setupLightOutput(
+		vehicleConfig.fogLight.outputPin,
+		vehicleConfig.fogLight.fadeOnTime,
+		vehicleConfig.fogLight.fadeOffTime
+	);
+	setupLightOutput(
+		vehicleConfig.frontLeftTurnLight.outputPin,
+		vehicleConfig.frontLeftTurnLight.fadeOnTime,
+		vehicleConfig.frontLeftTurnLight.fadeOffTime
+	);
+	setupLightOutput(
+		vehicleConfig.frontRightTurnLight.outputPin,
+		vehicleConfig.frontRightTurnLight.fadeOnTime,
+		vehicleConfig.frontRightTurnLight.fadeOffTime
+	);
+	setupLightOutput(
+		vehicleConfig.rearLeftTurnLight.outputPin,
+		vehicleConfig.rearLeftTurnLight.fadeOnTime,
+		vehicleConfig.rearLeftTurnLight.fadeOffTime
+	);
+	setupLightOutput(
+		vehicleConfig.rearRightTurnLight.outputPin,
+		vehicleConfig.rearRightTurnLight.fadeOnTime,
+		vehicleConfig.rearRightTurnLight.fadeOffTime
+	);
+	setupLightOutput(
+		vehicleConfig.reverseLight.outputPin,
+		vehicleConfig.reverseLight.fadeOnTime,
+		vehicleConfig.reverseLight.fadeOffTime
+	);
+	setupLightOutput(
+		vehicleConfig.brakeLight.outputPin,
+		vehicleConfig.brakeLight.fadeOnTime,
+		vehicleConfig.brakeLight.fadeOffTime
+	);
+	setupLightOutput(
+		vehicleConfig.auxLight.outputPin,
+		vehicleConfig.auxLight.fadeOnTime,
+		vehicleConfig.auxLight.fadeOffTime
+	);
+
+	// Initialize brightness adjustment
+	brightnessAdjust.setupAdjustmentParameters(5, 2);
+	brightnessAdjust.configureBrightnessLevels(LightType::LOW_BEAM, LightModes::PRIMARY, vehicleConfig.lowBeamLight.primaryOnBrightness);
+	brightnessAdjust.configureBrightnessLevels(LightType::LOW_BEAM, LightModes::SECONDARY, vehicleConfig.lowBeamLight.secondaryOnBrightness);
+	brightnessAdjust.configureBrightnessLevels(LightType::LOW_BEAM, LightModes::TERTIARY, vehicleConfig.lowBeamLight.tertiaryOnBrightness);
+	brightnessAdjust.configureBrightnessLevels(LightType::HIGH_BEAM, LightModes::PRIMARY, vehicleConfig.highBeamLight.primaryOnBrightness);
+	brightnessAdjust.configureBrightnessLevels(LightType::PARKING, LightModes::PRIMARY, vehicleConfig.parkingLight.primaryOnBrightness);
+	brightnessAdjust.configureBrightnessLevels(LightType::BRAKE, LightModes::PRIMARY, vehicleConfig.brakeLight.primaryOnBrightness);
+	brightnessAdjust.configureBrightnessLevels(LightType::BRAKE, LightModes::SECONDARY, vehicleConfig.brakeLight.secondaryOnBrightness);
+	brightnessAdjust.configureBrightnessLevels(LightType::REAR_LEFT_TURN, LightModes::PRIMARY, vehicleConfig.rearLeftTurnLight.primaryOnBrightness);
+	brightnessAdjust.configureBrightnessLevels(LightType::REAR_LEFT_TURN, LightModes::SECONDARY, vehicleConfig.rearLeftTurnLight.secondaryOnBrightness);
+	brightnessAdjust.configureBrightnessLevels(LightType::REAR_RIGHT_TURN, LightModes::PRIMARY, vehicleConfig.rearRightTurnLight.primaryOnBrightness);
+	brightnessAdjust.configureBrightnessLevels(LightType::REAR_RIGHT_TURN, LightModes::SECONDARY, vehicleConfig.rearRightTurnLight.secondaryOnBrightness);
+	brightnessAdjust.configureBrightnessLevels(LightType::FRONT_LEFT_TURN, LightModes::PRIMARY, vehicleConfig.frontLeftTurnLight.primaryOnBrightness);
+	brightnessAdjust.configureBrightnessLevels(LightType::FRONT_RIGHT_TURN, LightModes::PRIMARY, vehicleConfig.frontRightTurnLight.primaryOnBrightness);
+	brightnessAdjust.configureBrightnessLevels(LightType::REVERSE, LightModes::PRIMARY, vehicleConfig.reverseLight.primaryOnBrightness);
+	brightnessAdjust.configureBrightnessLevels(LightType::FOG, LightModes::PRIMARY, vehicleConfig.fogLight.primaryOnBrightness);
+	brightnessAdjust.configureBrightnessLevels(LightType::AUX, LightModes::PRIMARY, vehicleConfig.auxLight.primaryOnBrightness);
 
 	/************************************
 	* Setup Functions
 	************************************/
-	initInterrupts(inFunction1ControlPPM, inFunction2ControlPPM, inSoundPPM);
-	#if (DEBUGLEVEL >=1)
-	debuggingInit(DEBUGLEVEL, outStatusLed);
-	#endif
+	initInterrupts(vehicleConfig.ppmConfig.pinChannel1, vehicleConfig.ppmConfig.pinChannel2, vehicleConfig.ppmConfig.pinSoundChannel);
+	if (DEBUGLEVEL >=1) {
+		debuggingInit(DEBUGLEVEL, vehicleConfig.generalConfig.statusLightPin);
+	}
 
-	#if (SERIAL_COM == true)
-	serialConfigure(&SerialHW,			// Serial interface on arduino
-				19200,					// Baudrate
-				SERIAL_8N1,				// e.g. SERIAL_8N1 | start bit, data bit, stop bit
-				1000, 
-				SERIAL_TURNAROUND, 
-				outTxEnablePin			// Pin to switch between Transmit and Receive
-	);
-	#endif
+	if (vehicleConfig.serialConfig.isEnabled) {
+		serialConfigure(&SerialHW,			// Serial interface on arduino
+					vehicleConfig.serialConfig.baudRate,
+					vehicleConfig.serialConfig.byteFormat,
+					vehicleConfig.serialConfig.timeout,
+					vehicleConfig.serialConfig.pollingInterval,
+					vehicleConfig.serialConfig.outTxEnablePin
+		);
+	}
 }
 
 void loop() {                             // put your main code here, to run repeatedly:
@@ -155,8 +216,8 @@ void loop() {                             // put your main code here, to run rep
 	 */
 	highBeamLight.state = mapSwitchToFunction(channel1.upperSwitch[3], true, false, false);	// Function to map a Key [Down, Mid, Up]
 	highBeamLightFlash.state = mapSwitchToFunction(channel1.upperSwitch[3], false, false, true);	// Function to map a Key [Down, Mid, Up]
-	leftFlashLight.state = mapSwitchToFunction(channel1.lowerSwitch[1], true, false, false);	// Function to map a Key [Down, Mid, Up]
-	rightFlashLight.state = mapSwitchToFunction(channel1.lowerSwitch[1], false, false, true);	// Function to map a Key [Down, Mid, Up]
+	leftIndicatorLight.state = mapSwitchToFunction(channel1.lowerSwitch[1], true, false, false);	// Function to map a Key [Down, Mid, Up]
+	rightIndicatorLight.state = mapSwitchToFunction(channel1.lowerSwitch[1], false, false, true);	// Function to map a Key [Down, Mid, Up]
 
 	parkLight.state = mapSwitchToFunction(channel2.lowerSwitch[0], false, true, true);	// Function to map a Key [Down, Mid, Up]
 	lowBeamLight.state = mapSwitchToFunction(channel2.lowerSwitch[0], false, false, true);	// Function to map a Key [Down, Mid, Up]
@@ -164,173 +225,250 @@ void loop() {                             // put your main code here, to run rep
 	hazardLight.state = mapSwitchToFunction(channel2.upperSwitch[1], false, false, true);	// Function to map a Key [Down, Mid, Up]
 	beaconLight.state = mapSwitchToFunction(channel2.upperSwitch[2], false, false, true);	// Function to map a Key [Down, Mid, Up]
 	auxLight.state = mapSwitchToFunction(channel2.upperSwitch[3], false, false, true);	// Function to map a Key [Down, Mid, Up]
-	reverseLight.state = !digitalRead(inReverseSignal);
-	brakeLight.state = !digitalRead(inBrakeSignal);
+	reverseLight.state = !digitalRead(vehicleConfig.lightInputChannel.reverseSignal);	// Function to read the Reverse Signal from the External Controller
+	brakeLight.state = !digitalRead(vehicleConfig.lightInputChannel.brakeSignal);
 
 	/*
 	 * Write Light function state to the output var
 	 */
 	parkLight.out = directlyToOutput(parkLight.state);
 	lowBeamLight.out = directlyToOutput(lowBeamLight.state);
-	highBeamLight.out = highBeamFlash(highBeamLight.state, highBeamLightFlash.state, HIGH_BEAM_FLASH_FREQUENCY);
+	highBeamLight.out = highBeamFlash(highBeamLight.state, highBeamLightFlash.state, vehicleConfig.highBeamConfig.flashFrequency);
 	fogLight.out = directlyToOutput(fogLight.state);
 	beaconLight.out = directlyToOutput(beaconLight.state);
 	auxLight.out = directlyToOutput(auxLight.state);
 	reverseLight.out = directlyToOutput(reverseLight.state);
 	brakeLight.out = directlyToOutput(brakeLight.state);
-	setFlasherLight(leftFlashLight.state, rightFlashLight.state, hazardLight.state, &leftFlashLight.out, &rightFlashLight.out, BLINKER_FREQUENCY);
 
-	bool starterDiming = false;
-	if(channel3Switch == DIRECTION_DOWN) starterDiming = true;
+	setTurnIndicators(
+		leftIndicatorLight.state,
+		rightIndicatorLight.state,
+		hazardLight.state,
+		&leftIndicatorLight.out,
+		&rightIndicatorLight.out,
+		vehicleConfig.turnSignalConfig.flashFrequency
+	);
+
+	bool isStarterActive = false;
+	if(channel3Switch == DIRECTION_DOWN) isStarterActive = true;
+	brightnessAdjust.setStarterState(isStarterActive);
 
 	/*
 	 * Set Outputs
 	 */
-	uint8_t normalDimming = starterDimming(starterDiming, SOFT_PWM_HIGH, STARTER_DIMM_DIVISOR, STARTER_DIMM_MULTI1);
-	uint8_t parkDimming = starterDimming(starterDiming, PARKING_DIMM, STARTER_DIMM_DIVISOR, STARTER_DIMM_MULTI1);
-  uint8_t parkDimmingRear = starterDimming(starterDiming, PARKING_DIMM_REAR, STARTER_DIMM_DIVISOR, STARTER_DIMM_MULTI1);
 
-	setBooleanLight(outParkingLight, parkLight.out, parkDimming);
-	#if (HEADLIGHT_IS_PARKING && HEADLIGHT_IS_HIGHBEAM)
-	uint8_t headParkDimming = starterDimming(starterDiming, HEADLIGHT_PARKING_VALUE, STARTER_DIMM_DIVISOR, STARTER_DIMM_MULTI1); 
-	uint8_t headLowDimming = starterDimming(starterDiming, HEADLIGHT_LOWBEAM_VALUE, STARTER_DIMM_DIVISOR, STARTER_DIMM_MULTI1); 
-	uint8_t headHighDimming = starterDimming(starterDiming, HEADLIGHT_HIGHBEAM_VALUE, STARTER_DIMM_DIVISOR, STARTER_DIMM_MULTI1); 
-	setCombinedHeadlightAll(outLowBeamLight,
-							parkLight.out,
-							lowBeamLight.out,
-							highBeamLight.out,
-							headParkDimming,
-							headLowDimming,
-							headHighDimming);
-	#elif (HEADLIGHT_IS_HIGHBEAM)
-	uint8_t headLowDimming = starterDimming(starterDiming, HEADLIGHT_LOWBEAM_VALUE, STARTER_DIMM_DIVISOR, STARTER_DIMM_MULTI1); 
-	uint8_t headHighDimming = starterDimming(starterDiming, HEADLIGHT_HIGHBEAM_VALUE, STARTER_DIMM_DIVISOR, STARTER_DIMM_MULTI1); 
-	setCombinedHeadlightHighOnly(outLowBeamLight,
-								lowBeamLight.out,
-								highBeamLight.out,
-								headLowDimming,
-								headHighDimming);
-	#elif (HEADLIGHT_IS_PARKING)
-	uint8_t headParkDimming = starterDimming(starterDiming, HEADLIGHT_PARKING_VALUE, STARTER_DIMM_DIVISOR, STARTER_DIMM_MULTI1); 
-	uint8_t headLowDimming = starterDimming(starterDiming, HEADLIGHT_LOWBEAM_VALUE, STARTER_DIMM_DIVISOR, STARTER_DIMM_MULTI1); 
-	setCombinedHeadlightParkOnly(outLowBeamLight,
-								parkLight.out,
-								lowBeamLight.out,
-								headParkDimming,
-								headLowDimming);
-	#else
-	setBooleanLight(outLowBeamLight, lowBeamLight.out, normalDimming);
-	#endif
-	setBooleanLight(outHighBeamLight, highBeamLight.out, normalDimming);
-	setBooleanLight(outFogLight, fogLight.out, normalDimming);
-	setBooleanLight(outAuxLight, auxLight.out, normalDimming);
-	setBooleanLight(outFrontLeftFlashLight, leftFlashLight.out, normalDimming);
-	setBooleanLight(outFrontRightFlashLight, rightFlashLight.out, normalDimming);
-	setBooleanLight(outReverseLight, reverseLight.out, normalDimming);
+	setBooleanLight(
+		vehicleConfig.parkingLight.outputPin,
+		parkLight.out, 
+		brightnessAdjust.getBrightnessLevel(LightType::PARKING)
+	);
+	
+	if (vehicleConfig.lowBeamConfig.isParkingLight && vehicleConfig.lowBeamConfig.isHighBeam) {
+		setCombinedHeadlightAll(
+			vehicleConfig.lowBeamLight.outputPin,
+			parkLight.out,
+			lowBeamLight.out,
+			highBeamLight.out,
+			brightnessAdjust.getBrightnessLevel(LightType::LOW_BEAM, LightModes::TERTIARY),
+			brightnessAdjust.getBrightnessLevel(LightType::LOW_BEAM, LightModes::SECONDARY),
+			brightnessAdjust.getBrightnessLevel(LightType::LOW_BEAM)
+		);
+	} else if (vehicleConfig.lowBeamConfig.isHighBeam) {
+		setCombinedHeadlightHighOnly(
+			vehicleConfig.lowBeamLight.outputPin,
+			lowBeamLight.out,
+			highBeamLight.out,
+			brightnessAdjust.getBrightnessLevel(LightType::LOW_BEAM, LightModes::SECONDARY),
+			brightnessAdjust.getBrightnessLevel(LightType::LOW_BEAM)
+		);
+	} else if (vehicleConfig.lowBeamConfig.isParkingLight) {
+		setCombinedHeadlightParkOnly(
+			vehicleConfig.lowBeamLight.outputPin,
+			parkLight.out,
+			lowBeamLight.out,
+			
+			brightnessAdjust.getBrightnessLevel(LightType::LOW_BEAM, LightModes::SECONDARY),
+			brightnessAdjust.getBrightnessLevel(LightType::LOW_BEAM)
+		);
+	} else {
+		setBooleanLight(
+			vehicleConfig.lowBeamLight.outputPin,
+			lowBeamLight.out, 
+			brightnessAdjust.getBrightnessLevel(LightType::LOW_BEAM)
+		);
+	}
+	
+	setBooleanLight(
+		vehicleConfig.highBeamLight.outputPin, 
+		highBeamLight.out, 
+		brightnessAdjust.getBrightnessLevel(LightType::HIGH_BEAM)
+	);
+	setBooleanLight(
+		vehicleConfig.fogLight.outputPin, 
+		fogLight.out, 
+		brightnessAdjust.getBrightnessLevel(LightType::FOG)
+	);
+	setBooleanLight(
+		vehicleConfig.auxLight.outputPin, 
+		auxLight.out, 
+		brightnessAdjust.getBrightnessLevel(LightType::AUX)
+	);
+	setBooleanLight(
+		vehicleConfig.frontLeftTurnLight.outputPin, 
+		leftIndicatorLight.out, 
+		brightnessAdjust.getBrightnessLevel(LightType::FRONT_LEFT_TURN)
+	);
+	setBooleanLight(
+		vehicleConfig.frontRightTurnLight.outputPin, 
+		rightIndicatorLight.out, 
+		brightnessAdjust.getBrightnessLevel(LightType::FRONT_RIGHT_TURN)
+	);
+	setBooleanLight(
+		vehicleConfig.reverseLight.outputPin, 
+		reverseLight.out, 
+		brightnessAdjust.getBrightnessLevel(LightType::REVERSE)
+	);
 
-	#if (COUNTRY_OPTION == EU)
-	setBooleanLight(outRearLeftFlashLight, leftFlashLight.out, normalDimming);
-	setBooleanLight(outRearRightFlashLight, rightFlashLight.out, normalDimming);
-	setBooleanLight(outBrakeLight, brakeLight.out, normalDimming);
+	switch (vehicleConfig.generalConfig.countryOption) {
+	case CountryOption::EU:
+		setBooleanLight(
+			vehicleConfig.rearLeftTurnLight.outputPin,
+			leftIndicatorLight.out, 
+			brightnessAdjust.getBrightnessLevel(LightType::REAR_LEFT_TURN)
+		);
+		setBooleanLight(
+			vehicleConfig.rearRightTurnLight.outputPin,
+			rightIndicatorLight.out,
+			brightnessAdjust.getBrightnessLevel(LightType::REAR_RIGHT_TURN)
+		);
+		setBooleanLight(
+			vehicleConfig.brakeLight.outputPin,
+			brakeLight.out,
+			brightnessAdjust.getBrightnessLevel(LightType::BRAKE)
+		);
+		break;
 
-  #elif (COUNTRY_OPTION == US)
-  
-  if (leftFlashLight.state || hazardLight.state) {
-    setBooleanLight(outRearLeftFlashLight, leftFlashLight.out, normalDimming);
-  } else if (leftFlashLight.out == false) {
-    setBrakingWithPark(outRearLeftFlashLight, parkLight.state, brakeLight.state, parkDimmingRear, normalDimming);
-  }
-  if (rightFlashLight.state || hazardLight.state) {
-    setBooleanLight(outRearRightFlashLight, rightFlashLight.out, normalDimming);
-  } else if (rightFlashLight.out == false) {
-    setBrakingWithPark(outRearRightFlashLight, parkLight.state, brakeLight.state, parkDimmingRear, normalDimming);
-  }
+	case CountryOption::US:
+		if (leftIndicatorLight.state || hazardLight.state) {
+			setBooleanLight(
+				vehicleConfig.rearLeftTurnLight.outputPin,
+				leftIndicatorLight.out, 
+				brightnessAdjust.getBrightnessLevel(LightType::REAR_LEFT_TURN)
+			);
+		} else if (leftIndicatorLight.out == false) {
+			setBrakingWithPark(
+				vehicleConfig.rearLeftTurnLight.outputPin,
+				parkLight.state, 
+				brakeLight.state,
+				brightnessAdjust.getBrightnessLevel(LightType::REAR_LEFT_TURN, LightModes::SECONDARY),
+				brightnessAdjust.getBrightnessLevel(LightType::REAR_LEFT_TURN, LightModes::PRIMARY)
+			);
+		}
 
-  setBrakingWithPark(outBrakeLight, parkLight.state, brakeLight.state, parkDimmingRear, normalDimming);
-	#endif
+		if (rightIndicatorLight.state || hazardLight.state) {
+			setBooleanLight(
+				vehicleConfig.rearRightTurnLight.outputPin,
+				rightIndicatorLight.out, 
+				brightnessAdjust.getBrightnessLevel(LightType::REAR_RIGHT_TURN)
+			);
+		} else if (rightIndicatorLight.out == false) {
+			setBrakingWithPark(
+				vehicleConfig.rearRightTurnLight.outputPin,
+				parkLight.state,
+				brakeLight.state,
+				brightnessAdjust.getBrightnessLevel(LightType::REAR_RIGHT_TURN, LightModes::SECONDARY),
+				brightnessAdjust.getBrightnessLevel(LightType::REAR_RIGHT_TURN, LightModes::PRIMARY)
+			);
+		}
 
-  #if (SERIAL_COM == true)
-	/*
-	 * Setup serial communication
-	 */
+		setBrakingWithPark(
+			vehicleConfig.brakeLight.outputPin,
+			parkLight.state,
+			brakeLight.state,
+			brightnessAdjust.getBrightnessLevel(LightType::BRAKE, LightModes::SECONDARY),
+			brightnessAdjust.getBrightnessLevel(LightType::BRAKE, LightModes::PRIMARY)
+		);
+		break;
+	}
 
-	// Function 1 is Light information data which has only one byte
-	/* 	0 -> parking light,
-		1 -> brake light,
-		2 -> reversing lights,
-		3 -> right blinker,
-		4 -> left blinker,
-		5 -> auxiliary light,
-		6 -> beacon light
-		7 -> dimm light
-	*/
-	setLightData(PARKLIGHT, parkLight.out);
-	setLightData(BRAKELIGHT, brakeLight.out);
-	setLightData(REVERSELIGHT, reverseLight.out);
-	setLightData(RIGHTBLINK, rightFlashLight.out);
-	setLightData(LEFTBLINK, leftFlashLight.out);
-	setLightData(AUXLIGHT, auxLight.out);
-	setLightData(BEACONLIGHT, beaconLight.out);
-	setLightData(DIMMLIGHTS, starterDiming);
-	//setServoData();
-	serialUpdate();
-  #endif
+	if (vehicleConfig.serialConfig.isEnabled == true) {
+		/*
+		* Setup serial communication
+		*/
+		setLightData(LightIdentifier::PARK_LIGHT, parkLight.out);
+		setLightData(LightIdentifier::BRAKE_LIGHT, brakeLight.out);
+		setLightData(LightIdentifier::REVERSE_LIGHT, reverseLight.out);
+		setLightData(LightIdentifier::RIGHT_BLINK, rightIndicatorLight.out);
+		setLightData(LightIdentifier::LEFT_BLINK, leftIndicatorLight.out);
+		setLightData(LightIdentifier::AUX_LIGHT, auxLight.out);
+		setLightData(LightIdentifier::BEACON_LIGHT, beaconLight.out);
+		setLightData(LightIdentifier::DIMM_LIGHTS, isStarterActive);
+		//setServoData();
+		serialUpdate();
+	}
 
 	/*
 	 * Setup Debugging
 	 */
 
-	#if (DEBUGLEVEL >=1)
-	controllerStatus(errorFlag, outStatusLed);
-	#endif
+	if (DEBUGLEVEL >=1) {
+	controllerStatus(errorFlag, vehicleConfig.generalConfig.statusLightPin);
+	}
 
-	#if (DEBUGLEVEL == 2)
-	debugChannelEvaluation(channel1.poti[0],
-							channel1.poti[1],
-							channel1.lowerSwitch[0],
-							channel1.lowerSwitch[1],
-							channel1.upperSwitch[0],
-							channel1.upperSwitch[1],
-							channel1.upperSwitch[2],
-							channel1.upperSwitch[3],
-							channel2.lowerSwitch[0],
-							channel2.lowerSwitch[1],
-							channel2.upperSwitch[0],
-							channel2.upperSwitch[1],
-							channel2.upperSwitch[2],
-							channel2.upperSwitch[3]);
-	#endif
-	#if(DEBUGLEVEL == 3)
-	debugFunctionState(parkLight.state,
-						lowBeamLight.state,
-						highBeamLight.state,
-						highBeamLightFlash.state,
-						fogLight.state,
-						beaconLight.state,
-						auxLight.state,
-						hazardLight.state,
-						leftFlashLight.state,
-						rightFlashLight.state,
-						reverseLight.state,
-						brakeLight.state);
-	#endif
-	#if(DEBUGLEVEL == 4)
-	debugFunctionOut(parkLight.out,
-						lowBeamLight.out,
-						highBeamLight.out,
-						highBeamLightFlash.out,
-						fogLight.out,
-						beaconLight.out,
-						auxLight.out,
-						hazardLight.out,
-						leftFlashLight.out,
-						rightFlashLight.out,
-						reverseLight.state,
-						brakeLight.state);
-	#endif
-
-	#if (DEBUGLEVEL == 5)
-	SerialUSB.println(starterDiming);
-	SerialUSB.println(digitalRead(inSoundPPM));
-	#endif
+	switch (DEBUGLEVEL) {
+		case DebugLevel::NONE:
+			// No debugging information
+			break;
+		case DebugLevel::STATUS_ONLY:
+			// Handled below
+			break;
+		case DebugLevel::PPM_CHANNEL:
+			debugChannelEvaluation(channel1.poti[0],
+									channel1.poti[1],
+									channel1.lowerSwitch[0],
+									channel1.lowerSwitch[1],
+									channel1.upperSwitch[0],
+									channel1.upperSwitch[1],
+									channel1.upperSwitch[2],
+									channel1.upperSwitch[3],
+									channel2.lowerSwitch[0],
+									channel2.lowerSwitch[1],
+									channel2.upperSwitch[0],
+									channel2.upperSwitch[1],
+									channel2.upperSwitch[2],
+									channel2.upperSwitch[3]);
+			break;
+		case DebugLevel::FUNCTION_STATE:
+			debugFunctionState(parkLight.state,
+								lowBeamLight.state,
+								highBeamLight.state,
+								highBeamLightFlash.state,
+								fogLight.state,
+								beaconLight.state,
+								auxLight.state,
+								hazardLight.state,
+								leftIndicatorLight.state,
+								rightIndicatorLight.state,
+								reverseLight.state,
+								brakeLight.state);
+			break;
+		case DebugLevel::FUNCTION_OUT:
+			debugFunctionOut(parkLight.out,
+								lowBeamLight.out,
+								highBeamLight.out,
+								highBeamLightFlash.out,
+								fogLight.out,
+								beaconLight.out,
+								auxLight.out,
+								hazardLight.out,
+								leftIndicatorLight.out,
+								rightIndicatorLight.out,
+								reverseLight.state,
+								brakeLight.state);
+			break;
+		case DebugLevel::STARTER_DIMMING:
+			SerialUSB.println(isStarterActive);
+			SerialUSB.println(digitalRead(vehicleConfig.ppmConfig.pinSoundChannel));
+			break;
+		}
 }

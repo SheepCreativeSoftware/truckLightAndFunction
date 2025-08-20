@@ -1,5 +1,5 @@
 /************************************ 
- * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
+ * Copyright (C) 2020-2025 Marina Egner <hello@sheepcs.de>
  *
  * This program is free software: you can redistribute it and/or modify it 
  * under the terms of the GNU General Public License as published by the 
@@ -32,7 +32,7 @@ bool highBeamFlash(bool lightState, bool lightFlashState, uint16_t flashFrequenc
 	return false;
 }
 
-void setFlasherLight(bool leftFlasherState, bool rightFlasherState, bool hazardState, bool* outLeftLight, bool* outRightLight, uint16_t flashFrequency) {
+void setTurnIndicators(bool leftFlasherState, bool rightFlasherState, bool hazardState, bool* outLeftLight, bool* outRightLight, uint16_t flashFrequency) {
 	if(hazardState) {
 		bool blinkerState = flasher[1].blink(flashFrequency);
 		*outLeftLight = blinkerState;
@@ -111,12 +111,7 @@ void setCombinedHeadlightParkOnly(uint8_t pin,
 	}
 }
 
-uint8_t starterDimming(bool active, uint8_t defaultDimValue, uint8_t divisor, uint8_t multiplier1) {
-	if(!active) return defaultDimValue;
-	if(active) return defaultDimValue / divisor * multiplier1;
-}
-
-void setBrakingWithPark(uint8_t pin, uint8_t parkState, uint8_t brakeState, uint8_t parkDimming, uint8_t highValue = SOFT_PWM_HIGH) {
+void setBrakingWithPark(uint8_t pin, uint8_t parkState, uint8_t brakeState, uint8_t parkDimming, uint8_t highValue) {
 	if(brakeState) {
 		SoftPWMSet(pin, highValue);
 	} else if(parkState) {
