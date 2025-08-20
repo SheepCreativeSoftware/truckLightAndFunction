@@ -25,20 +25,17 @@
 
 void debuggingInit(uint8_t debugLevel, uint8_t outputLED);
 void controllerStatus(bool errorFlag, uint8_t outputLED);			//function to signal errorstate
-void debugChannelEvaluation(uint8_t channel1Poti1,
-							uint8_t channel1Poti2,
-							uint8_t channel1Switch1,
-							uint8_t channel1Switch2,
-							uint8_t channel1Switch3,
-							uint8_t channel1Switch4,
-							uint8_t channel1Switch5,
-							uint8_t channel1Switch6,
-							uint8_t channel2Switch1,
-							uint8_t channel2Switch2,
-							uint8_t channel2Switch3,
-							uint8_t channel2Switch4,
-							uint8_t channel2Switch5,
-							uint8_t channel2Switch6);
+void debugChannelEvaluation(
+	uint8_t channelNumber,
+	uint8_t channel1,
+	uint8_t channel2,
+	uint8_t channel3,
+	uint8_t channel4,
+	uint8_t channel5,
+	uint8_t channel6,
+	uint8_t channel7,
+	uint8_t channel8
+);
 
 void debugFunctionState(bool parkLight,
 						bool lowBeamLight,

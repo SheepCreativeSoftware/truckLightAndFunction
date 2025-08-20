@@ -65,8 +65,8 @@ uint8_t ppm2ToSwitch3Stages(uint16_t signal1, uint16_t signal2) {
  * returns a value from outMin to outMax
  * if calculation fails a zero returns
  ***************************************************/
-int32_t ppmServoToRange(int32_t signal, int32_t inMin, int32_t inMax, int32_t outMin, int32_t outMax) {
-	int32_t dynResult;
+uint16_t ppmServoToRange(uint16_t signal, uint16_t inMin, uint16_t inMax, uint16_t outMin, uint16_t outMax) {
+	uint16_t dynResult;
 	if(inMin != inMax) {						//if Min and Max are equal abbort calculation cause of divide by zero
 		dynResult = (signal - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
 		if(dynResult > outMax) dynResult = outMax;

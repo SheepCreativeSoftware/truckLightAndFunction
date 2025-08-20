@@ -31,16 +31,12 @@
 #include "debugging.h"					// Handles debbuging info
 #include "serialCommMaster.h"
 
-struct {
-	uint8_t poti[2];
-	uint8_t lowerSwitch[2];
-	uint8_t upperSwitch[4];
-} channel1;
+struct MultiswitchChannel {
+	uint16_t channel[8];
+};
 
-struct {
-	uint8_t lowerSwitch[2];
-	uint8_t upperSwitch[4];
-} channel2;
+MultiswitchChannel multiswitch1;
+MultiswitchChannel multiswitch2;
 
 struct Lights {
 	bool state;
@@ -193,38 +189,40 @@ void loop() {                             // put your main code here, to run rep
 	 * Read Switches and Potis from Multiswitches
 	 * Some switches are commented as they are not yet in use.
 	 */
-	channel1.poti[0] = getChannel1Poti(0, 0);
-	channel1.poti[1] = getChannel1Poti(1, 0);
-	channel1.lowerSwitch[0] = getChannel1Switch(0, DIRECTION_MID);	// Function to get the value of the Switches from Channel 1
-	channel1.lowerSwitch[1] = getChannel1Switch(1, DIRECTION_MID);	// Function to get the value of the Switches from Channel 1
-	channel1.upperSwitch[0] = getChannel1Switch(2, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 1
-	channel1.upperSwitch[1] = getChannel1Switch(3, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 1
-	channel1.upperSwitch[2] = getChannel1Switch(4, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 1
-	channel1.upperSwitch[3] = getChannel1Switch(5, DIRECTION_MID);	// Function to get the value of the Switches from Channel 1
+	multiswitch1.channel[0] = getChannel1Switch(0, DIRECTION_MID);
+	multiswitch1.channel[1] = getChannel1Switch(1, DIRECTION_MID);
+	multiswitch1.channel[2] = getChannel1Switch(2, DIRECTION_MID);
+	multiswitch1.channel[3] = getChannel1Switch(3, DIRECTION_MID);
+	multiswitch1.channel[4] = getChannel1Switch(4, DIRECTION_MID);
+	multiswitch1.channel[5] = getChannel1Switch(5, DIRECTION_MID);
+	multiswitch1.channel[6] = getChannel1Switch(6, DIRECTION_MID);
+	multiswitch1.channel[7] = getChannel1Switch(7, DIRECTION_MID);
 
-	channel2.lowerSwitch[0] = getChannel2Switch(5, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
-	channel2.lowerSwitch[1] = getChannel2Switch(4, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
-	channel2.upperSwitch[0] = getChannel2Switch(3, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
-	channel2.upperSwitch[1] = getChannel2Switch(2, DIRECTION_UP);	// Function to get the value of the Switches from Channel 2
-	channel2.upperSwitch[2] = getChannel2Switch(1, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
-	channel2.upperSwitch[3] = getChannel2Switch(0, DIRECTION_DOWN);	// Function to get the value of the Switches from Channel 2
+	multiswitch2.channel[0] = getChannel2Poti(0, 511);
+	multiswitch2.channel[1] = getChannel2Poti(1, 511);
+	multiswitch2.channel[2] = getChannel1Switch(0, DIRECTION_MID);
+	multiswitch2.channel[3] = getChannel1Switch(1, DIRECTION_MID);
+	multiswitch2.channel[4] = getChannel1Switch(2, DIRECTION_MID);
+	multiswitch2.channel[5] = getChannel1Switch(3, DIRECTION_MID);
+	multiswitch2.channel[6] = getChannel1Switch(4, DIRECTION_MID);
+	multiswitch2.channel[7] = getChannel1Switch(5, DIRECTION_MID);
 
 	channel3Switch = getChannel3Signal();
 
 	/*
 	 * Map switches to Functions
 	 */
-	highBeamLight.state = mapSwitchToFunction(channel1.upperSwitch[3], true, false, false);	// Function to map a Key [Down, Mid, Up]
-	highBeamLightFlash.state = mapSwitchToFunction(channel1.upperSwitch[3], false, false, true);	// Function to map a Key [Down, Mid, Up]
-	leftIndicatorLight.state = mapSwitchToFunction(channel1.lowerSwitch[1], true, false, false);	// Function to map a Key [Down, Mid, Up]
-	rightIndicatorLight.state = mapSwitchToFunction(channel1.lowerSwitch[1], false, false, true);	// Function to map a Key [Down, Mid, Up]
-
-	parkLight.state = mapSwitchToFunction(channel2.lowerSwitch[0], false, true, true);	// Function to map a Key [Down, Mid, Up]
-	lowBeamLight.state = mapSwitchToFunction(channel2.lowerSwitch[0], false, false, true);	// Function to map a Key [Down, Mid, Up]
-	fogLight.state = mapSwitchToFunction(channel2.upperSwitch[0], false, false, true);	// Function to map a Key [Down, Mid, Up]
-	hazardLight.state = mapSwitchToFunction(channel2.upperSwitch[1], false, false, true);	// Function to map a Key [Down, Mid, Up]
-	beaconLight.state = mapSwitchToFunction(channel2.upperSwitch[2], false, false, true);	// Function to map a Key [Down, Mid, Up]
-	auxLight.state = mapSwitchToFunction(channel2.upperSwitch[3], false, false, true);	// Function to map a Key [Down, Mid, Up]
+	
+	parkLight.state = mapSwitchToFunction(multiswitch1.channel[0], false, true, true);	// Function to map a Key [Down, Mid, Up]
+	lowBeamLight.state = mapSwitchToFunction(multiswitch1.channel[0], false, false, true);	// Function to map a Key [Down, Mid, Up]
+	leftIndicatorLight.state = mapSwitchToFunction(multiswitch1.channel[1], true, false, false);	// Function to map a Key [Down, Mid, Up]
+	rightIndicatorLight.state = mapSwitchToFunction(multiswitch1.channel[1], false, false, true);	// Function to map a Key [Down, Mid, Up]
+	fogLight.state = mapSwitchToFunction(multiswitch1.channel[2], false, false, true);	// Function to map a Key [Down, Mid, Up]
+	hazardLight.state = mapSwitchToFunction(multiswitch1.channel[3], false, false, true);	// Function to map a Key [Down, Mid, Up]
+	beaconLight.state = mapSwitchToFunction(multiswitch1.channel[4], false, false, true);	// Function to map a Key [Down, Mid, Up]
+	highBeamLight.state = mapSwitchToFunction(multiswitch1.channel[5], true, false, false);	// Function to map a Key [Down, Mid, Up]
+	highBeamLightFlash.state = mapSwitchToFunction(multiswitch1.channel[5], false, false, true);	// Function to map a Key [Down, Mid, Up]
+	auxLight.state = mapSwitchToFunction(multiswitch1.channel[6], false, false, true);	// Function to map a Key [Down, Mid, Up]
 	reverseLight.state = !digitalRead(vehicleConfig.lightInputChannel.reverseSignal);	// Function to read the Reverse Signal from the External Controller
 	brakeLight.state = !digitalRead(vehicleConfig.lightInputChannel.brakeSignal);
 
@@ -422,21 +420,31 @@ void loop() {                             // put your main code here, to run rep
 		case DebugLevel::STATUS_ONLY:
 			// Handled below
 			break;
-		case DebugLevel::PPM_CHANNEL:
-			debugChannelEvaluation(channel1.poti[0],
-									channel1.poti[1],
-									channel1.lowerSwitch[0],
-									channel1.lowerSwitch[1],
-									channel1.upperSwitch[0],
-									channel1.upperSwitch[1],
-									channel1.upperSwitch[2],
-									channel1.upperSwitch[3],
-									channel2.lowerSwitch[0],
-									channel2.lowerSwitch[1],
-									channel2.upperSwitch[0],
-									channel2.upperSwitch[1],
-									channel2.upperSwitch[2],
-									channel2.upperSwitch[3]);
+		case DebugLevel::PPM_CHANNEL1:
+			debugChannelEvaluation(
+				1,
+				multiswitch1.channel[0],
+				multiswitch1.channel[1],
+				multiswitch1.channel[2],
+				multiswitch1.channel[3],
+				multiswitch1.channel[4],
+				multiswitch1.channel[5],
+				multiswitch1.channel[6],
+				multiswitch1.channel[7]
+			);
+			break;
+		case DebugLevel::PPM_CHANNEL2:
+			debugChannelEvaluation(
+				2,
+				multiswitch2.channel[0],
+				multiswitch2.channel[1],
+				multiswitch2.channel[2],
+				multiswitch2.channel[3],
+				multiswitch2.channel[4],
+				multiswitch2.channel[5],
+				multiswitch2.channel[6],
+				multiswitch2.channel[7]
+			);
 			break;
 		case DebugLevel::FUNCTION_STATE:
 			debugFunctionState(parkLight.state,

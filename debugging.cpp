@@ -41,51 +41,37 @@ void controllerStatus(bool errorFlag, uint8_t outputLED) {
 	}
 }
 
-void debugChannelEvaluation(uint8_t channel1Poti1,
-							uint8_t channel1Poti2,
-							uint8_t channel1Switch1,
-							uint8_t channel1Switch2,
-							uint8_t channel1Switch3,
-							uint8_t channel1Switch4,
-							uint8_t channel1Switch5,
-							uint8_t channel1Switch6,
-							uint8_t channel2Switch1,
-							uint8_t channel2Switch2,
-							uint8_t channel2Switch3,
-							uint8_t channel2Switch4,
-							uint8_t channel2Switch5,
-							uint8_t channel2Switch6) {
+void debugChannelEvaluation(
+	uint8_t channelNumber,
+	uint8_t channel1,
+	uint8_t channel2,
+	uint8_t channel3,
+	uint8_t channel4,
+	uint8_t channel5,
+	uint8_t channel6,
+	uint8_t channel7,
+	uint8_t channel8
+) {
 	if((millis()%1000 >= 500) && (serialIsSent[0] == false)) {
-		SerialUSB.println(F("--Channelswitch 1--"));
-		SerialUSB.print(F("poti 0: "));
-		SerialUSB.println(channel1Poti1);
-		SerialUSB.print(F("poti 1: "));
-		SerialUSB.println(channel1Poti2);
-		SerialUSB.print(F("lowerSwitch 0: "));
-		SerialUSB.println(channel1Switch1);
-		SerialUSB.print(F("lowerSwitch 1: "));
-		SerialUSB.println(channel1Switch2);
-		SerialUSB.print(F("upperSwitch 0: "));
-		SerialUSB.println(channel1Switch3);
-		SerialUSB.print(F("upperSwitch 1: "));
-		SerialUSB.println(channel1Switch4);
-		SerialUSB.print(F("upperSwitch 2: "));
-		SerialUSB.println(channel1Switch5);
-		SerialUSB.print(F("upperSwitch 3: "));
-		SerialUSB.println(channel1Switch6);
-		SerialUSB.println("--Channelswitch 2--");
-		SerialUSB.print(F("lowerSwitch 0: "));
-		SerialUSB.println(channel2Switch1);
-		SerialUSB.print(F("lowerSwitch 1: "));
-		SerialUSB.println(channel2Switch2);
-		SerialUSB.print(F("upperSwitch 0: "));
-		SerialUSB.println(channel2Switch3);
-		SerialUSB.print(F("upperSwitch 1: "));
-		SerialUSB.println(channel2Switch4);
-		SerialUSB.print(F("upperSwitch 2: "));
-		SerialUSB.println(channel2Switch5);
-		SerialUSB.print(F("upperSwitch 3: "));
-		SerialUSB.println(channel2Switch6);
+		SerialUSB.print(F("--Multiswitch "));
+		SerialUSB.print(channelNumber);
+		SerialUSB.println(F(" --"));
+		SerialUSB.print(F("channel 1: "));
+		SerialUSB.println(channel1);
+		SerialUSB.print(F("channel 2: "));
+		SerialUSB.println(channel2);
+		SerialUSB.print(F("channel 3: "));
+		SerialUSB.println(channel3);
+		SerialUSB.print(F("channel 4: "));
+		SerialUSB.println(channel4);
+		SerialUSB.print(F("channel 5: "));
+		SerialUSB.println(channel5);
+		SerialUSB.print(F("channel 6: "));
+		SerialUSB.println(channel6);
+		SerialUSB.print(F("channel 7: "));
+		SerialUSB.println(channel7);
+		SerialUSB.print(F("channel 8: "));
+		SerialUSB.println(channel8);
 		SerialUSB.println(F("-------End-------"));
 		serialIsSent[0] = true;
 	} else if((millis()%1000 < 500) && (serialIsSent[0] == true)) {

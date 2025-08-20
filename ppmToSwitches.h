@@ -26,6 +26,6 @@
 //Functions
 uint8_t ppmToSwitchStages(uint16_t signal, bool invertDirection = 0);	// Function to evaluate the ppm signal of a switch
 uint8_t ppm2ToSwitch3Stages(uint16_t signal1, uint16_t signal2);		// Function to evaluate the ppm signal of a 3 stages switch with two signals
-int32_t ppmServoToRange(int32_t signal, int32_t inMin = 1060, int32_t inMax = 1980, int32_t outMin = 0, int32_t outMax = 1023); // Function to evaluate the ppm signal from a servo
+uint16_t ppmServoToRange(uint16_t signal, uint16_t inMin = 1060, uint16_t inMax = 1980, uint16_t outMin = 0, uint16_t outMax = 1023); // Function to evaluate the ppm signal from a servo
 
 #endif
