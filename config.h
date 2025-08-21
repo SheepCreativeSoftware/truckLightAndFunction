@@ -18,10 +18,14 @@
 
 #include "vehicleConfig.h"
 
+/************************************
+ * Configuration Programm
+ ************************************/
+
 VehicleConfig vehicleConfig = {
 	.generalConfig = {
 		.countryOption = CountryOption::US,
-		.debugLevel = DebugLevel::PPM_CHANNEL2,
+		.debugLevel = DebugLevel::STATUS_ONLY,
 		.statusLightPin = 13
 	},
 	.ppmConfig = {
@@ -51,7 +55,8 @@ VehicleConfig vehicleConfig = {
 	.rearLeftTurnLight = {
 		.outputPin = 5,
 		.primaryOnBrightness = 255,
-		.secondaryOnBrightness = 0,
+		// Parking when combined
+		.secondaryOnBrightness = 15,
 		.tertiaryOnBrightness = 0,
 		.offBrightness = 0,
 		.fadeOnTime = 200,
@@ -60,7 +65,8 @@ VehicleConfig vehicleConfig = {
 	.rearRightTurnLight = {
 		.outputPin = 6,
 		.primaryOnBrightness = 255,
-		.secondaryOnBrightness = 0,
+		// Parking when combined
+		.secondaryOnBrightness = 15,
 		.tertiaryOnBrightness = 0,
 		.offBrightness = 0,
 		.fadeOnTime = 200,
@@ -164,26 +170,5 @@ VehicleConfig vehicleConfig = {
 };
 
 #define DEBUGLEVEL vehicleConfig.generalConfig.debugLevel
-
-// Old config - remove after refactoring
-/* #define COUNTRY_OPTION US			  // Setup Region EU or US for Truck
-#define HEADLIGHT_IS_PARKING true	  // Head light is also parking light (dimmed)
-#define HEADLIGHT_IS_HIGHBEAM true	  // High => Low and High Beam on both Head Light output Pins | False => Seperate Pins for High and Low Beam
-#define HEADLIGHT_PARKING_VALUE 5	  // 0-255 Value for combined operation of Headlight
-#define HEADLIGHT_LOWBEAM_VALUE 100	  // 0-255 Value for combined operation of Headlight
-#define HEADLIGHT_HIGHBEAM_VALUE 255  // 0-255 Value for combined operation of Headlight
-#define HIGH_BEAM_FLASH_FREQUENCY 800 // Time frequency for head beam to flash
-#define BLINKER_FREQUENCY 1000		  // Time frequency for Flasher to flash
-#define LIGHT_FADE_ON_TIME 200		  // 200ms Fade on time for the Light
-#define LIGHT_FADE_OFF_TIME 200		  // 200ms Fade off time for the Light
-#define PARKING_DIMM 50				  // 0-255 Value for dimming the parking light
-#define PARKING_DIMM_REAR 15		  // 0-255 Value for dimming the parking light
-#define NORMAL_LIGHT_DIMMING 255	  // 0-255 Value for all light when active
-#define STARTER_DIMM_DIVISOR 5		  // Divisor for Dimming function
-#define STARTER_DIMM_MULTI1 2		  // 0-255 MAX Value for all light when active starter is activ
-#define SERIAL_COM true				  // Activate Communication to other modules via Serial Port
-#if (SERIAL_COM == true)
-#define SERIAL_TURNAROUND 20
-#endif */
 
 #endif

@@ -145,7 +145,7 @@ void setup() {
 	);
 
 	// Initialize brightness adjustment
-	brightnessAdjust.setupAdjustmentParameters(5, 2);
+	brightnessAdjust.setupAdjustmentParameters(vehicleConfig.generalLightConfig.starterDimmingFactor, vehicleConfig.generalLightConfig.starterDimmingMultiplier);
 	brightnessAdjust.configureBrightnessLevels(LightType::LOW_BEAM, LightModes::PRIMARY, vehicleConfig.lowBeamLight.primaryOnBrightness);
 	brightnessAdjust.configureBrightnessLevels(LightType::LOW_BEAM, LightModes::SECONDARY, vehicleConfig.lowBeamLight.secondaryOnBrightness);
 	brightnessAdjust.configureBrightnessLevels(LightType::LOW_BEAM, LightModes::TERTIARY, vehicleConfig.lowBeamLight.tertiaryOnBrightness);
