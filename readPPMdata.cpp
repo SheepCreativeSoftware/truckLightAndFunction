@@ -141,10 +141,10 @@ uint16_t getChannel2Poti(uint8_t channel, uint16_t fallbackValue) {
 	if(!checkChannelStatus(MULTI1)) return fallbackValue;				// return fallback if channel does not respond
 	switch (channel) {
 	case 0:
-		return ppmServoToRange(filter[0].filterValue(interrupt[MULTI2].buffer[0]));
+		return ppmServoToRange(filter[0].filterValue(interrupt[MULTI2].buffer[0], 10, 50));
 		break;
 	case 1:
-		return ppmServoToRange(filter[1].filterValue(interrupt[MULTI2].buffer[1]));
+		return ppmServoToRange(filter[1].filterValue(interrupt[MULTI2].buffer[1], 10, 50));
 		break;
 	}
 	// If something wrong return fallback

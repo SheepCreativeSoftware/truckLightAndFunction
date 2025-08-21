@@ -23,7 +23,7 @@
 #define BUFFER_EMPTY 0
 #define BROADCAST_ADDRESS 0
 #define FUNC_LIGHT_DATA 1
-#define FUNC_SERVO 2
+#define FUNC_LIGHT_SERVO 2
 
 // For CRC calculation
 #define BIT_COUNT 8
@@ -43,7 +43,7 @@ HardwareSerial* SerialPort;
 #define FUNC_SERVO 2
 
 uint8_t state = 2;
-uint8_t sendState = 1;
+uint8_t protocolversion = 1; // Default protocol version
 uint32_t timeout; // timeout interval
 uint32_t polling; // turnaround delay interval
 uint16_t frameDelay = 10; // frame time out in microseconds
@@ -57,7 +57,8 @@ void serialConfigure(HardwareSerial *_SerialPort,	// Serial interface on arduino
 					uint8_t byteFormat,		// e.g. SERIAL_8N1 | start bit, data bit, stop bit
 					long _timeout, 
 					long _polling, 
-					uint8_t _TxEnablePin		// Pin to switch between Transmit and Receive
+					uint8_t _TxEnablePin,		// Pin to switch between Transmit and Receive
+					uint8_t _protocolVersion
 ) {
 	SerialPort = _SerialPort;						// Store on a global var
 	(*SerialPort).begin(baud, byteFormat);			// Init communication port
@@ -66,6 +67,7 @@ void serialConfigure(HardwareSerial *_SerialPort,	// Serial interface on arduino
 	TxEnablePin = _TxEnablePin;						// Store on a global var for other functions
 	pinMode(TxEnablePin, OUTPUT);
 	digitalWrite(TxEnablePin, LOW);					// Set to low at start to receive data
+	protocolversion = _protocolVersion;				// Set protocol version
 	errorCount = 0; 								// Initialize errorCount
 } 
 
@@ -83,31 +85,37 @@ uint16_t serialUpdate() {
 
 
 void idle() {
-	switch (sendState) {
+	switch (protocolversion) {
 		case FUNC_LIGHT_DATA:
-			constructPacket(FUNC_LIGHT_DATA, lightDataFromSerial, 0);
+			constructPacket(FUNC_LIGHT_DATA, lightDataFromSerial);
 		break;
-		case FUNC_SERVO:
-			constructPacket(FUNC_SERVO, servoMicrosFromSerial[0], servoMicrosFromSerial[1]);
+		case FUNC_LIGHT_SERVO:
+			constructPacket(FUNC_LIGHT_SERVO, lightDataFromSerial, servoMicrosFromSerial[0], servoMicrosFromSerial[1]);
 		break;
 	}
 }
 
-void constructPacket(uint8_t function, uint16_t data, uint16_t data2) {
-	
+void constructPacket(uint8_t function, uint16_t data, uint16_t data2, uint16_t data3) {
+
 	frame[0] = function;
 	uint8_t frameSize;
-	if(function == FUNC_LIGHT_DATA) {
-		frameSize = 4;
-		frame[1] = data & 0x00FF;
+	switch (function) {
+		case FUNC_LIGHT_DATA:
+			frameSize = 4; // 1 byte function + 1 byte data + 2 bytes CRC
+			frame[1] = data & 0x00FF;
+			break;
+		case FUNC_LIGHT_SERVO:
+			frameSize = 8; // 1 byte function + 1 byte data + 2 bytes servo1 + 2 bytes servo2 + 2 bytes CRC
+			frame[1] = data & 0x00FF;
+			frame[2] = data2 >> 8;
+			frame[3] = data2 & 0xFF;
+			frame[4] = data3 >> 8;
+			frame[5] = data3 & 0xFF;
+			break;
+		default:
+			return; // Invalid function, do not send anything
 	}
-	if(function == FUNC_SERVO) {
-		frameSize = 7;
-		frame[1] = data >> 8;
-		frame[2] = data & 0xFF;
-		frame[3] = data2 >> 8;
-		frame[4] = data2 & 0xFF;
-	}
+
 	uint16_t crc16 = calculateCRC(frameSize -2);
 	frame[frameSize - 2] = crc16 >> 8; // Split crc into two bytes
 	frame[frameSize - 1] = crc16 & 0xFF;

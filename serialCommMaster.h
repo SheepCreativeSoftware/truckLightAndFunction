@@ -47,13 +47,14 @@ void serialConfigure(HardwareSerial *_SerialPort,	// Serial interface on arduino
 					uint8_t byteFormat,		// e.g. SERIAL_8N1 | start bit, data bit, stop bit
 					long _timeout, 
 					long _polling, 
-					uint8_t _TxEnablePin		// Pin to switch between Transmit and Receive
+					uint8_t _TxEnablePin,		// Pin to switch between Transmit and Receive
+					uint8_t protocolVersion = 1	// Protocol version to use
 ) ;
 
 uint16_t serialUpdate();
-void idle(); 
+void idle();
 void waitingForTurnaround();
-void constructPacket(uint8_t function, uint16_t data, uint16_t data2);
+void constructPacket(uint8_t function, uint16_t data, uint16_t data2 = 0, uint16_t data3 = 0);
 uint16_t calculateCRC(uint8_t bufferSize);
 void sendPacket(unsigned char bufferSize);
 void setLightData(uint8_t lightOption, bool lightState);

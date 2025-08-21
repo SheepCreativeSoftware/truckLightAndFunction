@@ -177,7 +177,8 @@ void setup() {
 					vehicleConfig.serialConfig.byteFormat,
 					vehicleConfig.serialConfig.timeout,
 					vehicleConfig.serialConfig.pollingInterval,
-					vehicleConfig.serialConfig.outTxEnablePin
+					vehicleConfig.serialConfig.outTxEnablePin,
+					vehicleConfig.serialConfig.protocolVersion
 		);
 	}
 }
@@ -198,14 +199,14 @@ void loop() {                             // put your main code here, to run rep
 	multiswitch1.channel[6] = getChannel1Switch(6, DIRECTION_MID);
 	multiswitch1.channel[7] = getChannel1Switch(7, DIRECTION_MID);
 
-	multiswitch2.channel[0] = getChannel2Poti(0, 511);
-	multiswitch2.channel[1] = getChannel2Poti(1, 511);
-	multiswitch2.channel[2] = getChannel1Switch(0, DIRECTION_MID);
-	multiswitch2.channel[3] = getChannel1Switch(1, DIRECTION_MID);
-	multiswitch2.channel[4] = getChannel1Switch(2, DIRECTION_MID);
-	multiswitch2.channel[5] = getChannel1Switch(3, DIRECTION_MID);
-	multiswitch2.channel[6] = getChannel1Switch(4, DIRECTION_MID);
-	multiswitch2.channel[7] = getChannel1Switch(5, DIRECTION_MID);
+	multiswitch2.channel[0] = getChannel2Poti(0, 90);
+	multiswitch2.channel[1] = getChannel2Poti(1, 90);
+	multiswitch2.channel[2] = getChannel2Switch(0, DIRECTION_MID);
+	multiswitch2.channel[3] = getChannel2Switch(1, DIRECTION_MID);
+	multiswitch2.channel[4] = getChannel2Switch(2, DIRECTION_MID);
+	multiswitch2.channel[5] = getChannel2Switch(3, DIRECTION_MID);
+	multiswitch2.channel[6] = getChannel2Switch(4, DIRECTION_MID);
+	multiswitch2.channel[7] = getChannel2Switch(5, DIRECTION_MID);
 
 	channel3Switch = getChannel3Signal();
 
@@ -401,7 +402,8 @@ void loop() {                             // put your main code here, to run rep
 		setLightData(LightIdentifier::AUX_LIGHT, auxLight.out);
 		setLightData(LightIdentifier::BEACON_LIGHT, beaconLight.out);
 		setLightData(LightIdentifier::DIMM_LIGHTS, isStarterActive);
-		//setServoData();
+		setServoData(0, multiswitch2.channel[0]);
+		setServoData(1, multiswitch2.channel[1]);
 		serialUpdate();
 	}
 
@@ -410,7 +412,7 @@ void loop() {                             // put your main code here, to run rep
 	 */
 
 	if (DEBUGLEVEL >=1) {
-	controllerStatus(errorFlag, vehicleConfig.generalConfig.statusLightPin);
+		controllerStatus(errorFlag, vehicleConfig.generalConfig.statusLightPin);
 	}
 
 	switch (DEBUGLEVEL) {

@@ -21,7 +21,7 @@
 VehicleConfig vehicleConfig = {
 	.generalConfig = {
 		.countryOption = CountryOption::US,
-		.debugLevel = DebugLevel::PPM_CHANNEL1,
+		.debugLevel = DebugLevel::PPM_CHANNEL2,
 		.statusLightPin = 13
 	},
 	.ppmConfig = {
@@ -41,7 +41,8 @@ VehicleConfig vehicleConfig = {
 		.baudRate = 19200,
 		.byteFormat = SERIAL_8N1,
 		.timeout = 1000,
-		.pollingInterval = 20
+		.pollingInterval = 20,
+		.protocolVersion = ProtocolVersion::V2
 	},
 	.lightInputChannel = {
 		.reverseSignal = A4,

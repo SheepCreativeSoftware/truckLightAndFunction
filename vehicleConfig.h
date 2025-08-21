@@ -33,6 +33,11 @@ enum DebugLevel {
 	STARTER_DIMMING
 };
 
+enum ProtocolVersion {
+	V1 = 1,
+	V2
+};
+
 struct GeneralConfig {
 	// Setup Region EU or US for Truck - Use `CountryOption` enum
 	CountryOption countryOption;
@@ -75,6 +80,8 @@ struct SerialConfig {
 	long timeout;
 	// Time between polling requests
 	long pollingInterval;
+	// Protocol version
+	ProtocolVersion protocolVersion;
 };
 
 struct LightInputChannel {

@@ -42,15 +42,15 @@ void controllerStatus(bool errorFlag, uint8_t outputLED) {
 }
 
 void debugChannelEvaluation(
-	uint8_t channelNumber,
-	uint8_t channel1,
-	uint8_t channel2,
-	uint8_t channel3,
-	uint8_t channel4,
-	uint8_t channel5,
-	uint8_t channel6,
-	uint8_t channel7,
-	uint8_t channel8
+	uint16_t channelNumber,
+	uint16_t channel1,
+	uint16_t channel2,
+	uint16_t channel3,
+	uint16_t channel4,
+	uint16_t channel5,
+	uint16_t channel6,
+	uint16_t channel7,
+	uint16_t channel8
 ) {
 	if((millis()%1000 >= 500) && (serialIsSent[0] == false)) {
 		SerialUSB.print(F("--Multiswitch "));
