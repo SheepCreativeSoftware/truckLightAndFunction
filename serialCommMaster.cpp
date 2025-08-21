@@ -50,6 +50,7 @@ uint16_t frameDelay = 10; // frame time out in microseconds
 uint32_t delayStart; // init variable for turnaround and timeout delay
 
 uint8_t lightDataFromSerial;
+uint8_t additionalDataFromSerial;
 uint16_t servoMicrosFromSerial[2];
 
 void serialConfigure(HardwareSerial *_SerialPort,	// Serial interface on arduino
@@ -90,27 +91,28 @@ void idle() {
 			constructPacket(FUNC_LIGHT_DATA, lightDataFromSerial);
 		break;
 		case FUNC_LIGHT_SERVO:
-			constructPacket(FUNC_LIGHT_SERVO, lightDataFromSerial, servoMicrosFromSerial[0], servoMicrosFromSerial[1]);
+			constructPacket(FUNC_LIGHT_SERVO, lightDataFromSerial, additionalDataFromSerial, servoMicrosFromSerial[0], servoMicrosFromSerial[1]);
 		break;
 	}
 }
 
-void constructPacket(uint8_t function, uint16_t data, uint16_t data2, uint16_t data3) {
+void constructPacket(uint8_t function, uint16_t lightData, uint16_t additionalData, uint16_t servoData1, uint16_t ServoData2) {
 
 	frame[0] = function;
 	uint8_t frameSize;
 	switch (function) {
 		case FUNC_LIGHT_DATA:
-			frameSize = 4; // 1 byte function + 1 byte data + 2 bytes CRC
-			frame[1] = data & 0x00FF;
+			frameSize = 4; // 1 byte function + 1 byte lightData + 2 bytes CRC
+			frame[1] = lightData & 0x00FF;
 			break;
 		case FUNC_LIGHT_SERVO:
-			frameSize = 8; // 1 byte function + 1 byte data + 2 bytes servo1 + 2 bytes servo2 + 2 bytes CRC
-			frame[1] = data & 0x00FF;
-			frame[2] = data2 >> 8;
-			frame[3] = data2 & 0xFF;
-			frame[4] = data3 >> 8;
-			frame[5] = data3 & 0xFF;
+			frameSize = 9; // 1 byte function + 1 byte lightData + 1 byte additionalData + 2 bytes servo1 + 2 bytes servo2 + 2 bytes CRC
+			frame[1] = lightData & 0x00FF;
+			frame[2] = additionalData & 0x00FF;
+			frame[3] = servoData1 >> 8;
+			frame[4] = servoData1 & 0xFF;
+			frame[5] = ServoData2 >> 8;
+			frame[6] = ServoData2 & 0xFF;
 			break;
 		default:
 			return; // Invalid function, do not send anything
@@ -159,7 +161,7 @@ void sendPacket(unsigned char bufferSize) {
 	delayStart = millis(); // start the timeout delay	
 }
 
-	// Function 1 is Light information data which has only one byte
+	// Function 1 is Light information lightData which has only one byte
 	/* 	0 -> parking light,
 		1 -> brake light,
 		2 -> reversing lights,
@@ -177,7 +179,16 @@ void setLightData(uint8_t lightOption, bool lightState) {
 		uint8_t bitmask = ~(0x1 << lightOption);
 		lightDataFromSerial &= bitmask;
 	}
+}
 
+void setAdditionalData(uint8_t additionalOption, bool additionalState) {
+	if(additionalState) {
+		uint8_t bitmask = 0x1 << additionalOption;
+		additionalDataFromSerial |= bitmask;
+	} else {
+		uint8_t bitmask = ~(0x1 << additionalOption);
+		additionalDataFromSerial &= bitmask;
+	}
 }
 
 void setServoData(uint8_t servoOption, uint16_t servoValue) {

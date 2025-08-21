@@ -190,14 +190,14 @@ void loop() {                             // put your main code here, to run rep
 	 * Read Switches and Potis from Multiswitches
 	 * Some switches are commented as they are not yet in use.
 	 */
-	multiswitch1.channel[0] = getChannel1Switch(0, DIRECTION_MID);
+	multiswitch1.channel[0] = getChannel1Switch(0, DIRECTION_DOWN);
 	multiswitch1.channel[1] = getChannel1Switch(1, DIRECTION_MID);
-	multiswitch1.channel[2] = getChannel1Switch(2, DIRECTION_MID);
-	multiswitch1.channel[3] = getChannel1Switch(3, DIRECTION_MID);
-	multiswitch1.channel[4] = getChannel1Switch(4, DIRECTION_MID);
+	multiswitch1.channel[2] = getChannel1Switch(2, DIRECTION_DOWN);
+	multiswitch1.channel[3] = getChannel1Switch(3, DIRECTION_UP);
+	multiswitch1.channel[4] = getChannel1Switch(4, DIRECTION_DOWN);
 	multiswitch1.channel[5] = getChannel1Switch(5, DIRECTION_MID);
-	multiswitch1.channel[6] = getChannel1Switch(6, DIRECTION_MID);
-	multiswitch1.channel[7] = getChannel1Switch(7, DIRECTION_MID);
+	multiswitch1.channel[6] = getChannel1Switch(6, DIRECTION_DOWN);
+	multiswitch1.channel[7] = getChannel1Switch(7, DIRECTION_DOWN);
 
 	multiswitch2.channel[0] = getChannel2Poti(0, 90);
 	multiswitch2.channel[1] = getChannel2Poti(1, 90);
@@ -402,6 +402,9 @@ void loop() {                             // put your main code here, to run rep
 		setLightData(LightIdentifier::AUX_LIGHT, auxLight.out);
 		setLightData(LightIdentifier::BEACON_LIGHT, beaconLight.out);
 		setLightData(LightIdentifier::DIMM_LIGHTS, isStarterActive);
+		setAdditionalData(0, leftIndicatorLight.state);
+		setAdditionalData(1, rightIndicatorLight.state);
+		setAdditionalData(2, hazardLight.state);
 		setServoData(0, multiswitch2.channel[0]);
 		setServoData(1, multiswitch2.channel[1]);
 		serialUpdate();

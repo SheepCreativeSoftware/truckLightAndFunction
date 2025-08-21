@@ -54,10 +54,11 @@ void serialConfigure(HardwareSerial *_SerialPort,	// Serial interface on arduino
 uint16_t serialUpdate();
 void idle();
 void waitingForTurnaround();
-void constructPacket(uint8_t function, uint16_t data, uint16_t data2 = 0, uint16_t data3 = 0);
+void constructPacket(uint8_t function, uint16_t lightData, uint16_t additionalData = 0, uint16_t servoData1 = 0, uint16_t ServoData2 = 0);
 uint16_t calculateCRC(uint8_t bufferSize);
 void sendPacket(unsigned char bufferSize);
 void setLightData(uint8_t lightOption, bool lightState);
+void setAdditionalData(uint8_t additionalOption, bool additionalState);
 void setServoData(uint8_t servoOption, uint16_t servoValue);
 
 #endif
