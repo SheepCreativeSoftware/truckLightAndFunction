@@ -145,12 +145,12 @@ uint16_t getChannel2Poti(uint8_t channel, uint16_t fallbackValue) {
 	case 0:
 		if (checkChannelStatus(MULTI2)) actualValue = interrupt[MULTI2].buffer[0];
 	
-		return ppmServoToRange(filter[0].filterValue(actualValue, 10, 20));
+		return filter[0].filterValue(actualValue, 10, 50);
 		break;
 	case 1:
 		if (checkChannelStatus(MULTI2)) actualValue = interrupt[MULTI2].buffer[1];
 
-		return ppmServoToRange(filter[1].filterValue(actualValue, 10, 20));
+		return filter[1].filterValue(actualValue, 10, 50);
 		break;
 	}
 	// If something wrong return fallback
@@ -161,21 +161,27 @@ uint8_t getChannel2Switch(uint8_t channel, uint8_t fallbackValue) {
 	if(!checkChannelStatus(MULTI2)) return fallbackValue;				// return fallback if channel does not respond
 	switch (channel) {
 	case 0:
-		return ppmToSwitchStages(interrupt[MULTI2].buffer[2], PPM_INVERT);
+		return ppmToSwitchStages(interrupt[MULTI2].buffer[0], PPM_INVERT);
 		break;
 	case 1:
-		return ppmToSwitchStages(interrupt[MULTI2].buffer[3], PPM_INVERT);
+		return ppmToSwitchStages(interrupt[MULTI2].buffer[1], PPM_INVERT);
 		break;
 	case 2:
-		return ppmToSwitchStages(interrupt[MULTI2].buffer[4], PPM_INVERT);
+		return ppmToSwitchStages(interrupt[MULTI2].buffer[2], PPM_INVERT);
 		break;
 	case 3:
-		return ppmToSwitchStages(interrupt[MULTI2].buffer[5], PPM_INVERT);
+		return ppmToSwitchStages(interrupt[MULTI2].buffer[3], PPM_INVERT);
 		break;
 	case 4:
-		return ppmToSwitchStages(interrupt[MULTI2].buffer[6], PPM_INVERT);
+		return ppmToSwitchStages(interrupt[MULTI2].buffer[4], PPM_INVERT);
 		break;
 	case 5:
+		return ppmToSwitchStages(interrupt[MULTI2].buffer[5], PPM_INVERT);
+		break;
+	case 6:
+		return ppmToSwitchStages(interrupt[MULTI2].buffer[6], PPM_INVERT);
+		break;
+	case 7:
 		return ppmToSwitchStages(interrupt[MULTI2].buffer[7], PPM_INVERT);
 		break;
 	}

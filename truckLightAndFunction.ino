@@ -200,14 +200,14 @@ void loop() {                             // put your main code here, to run rep
 	multiswitch1.channel[6] = getChannel1Switch(6, DIRECTION_DOWN);
 	multiswitch1.channel[7] = getChannel1Switch(7, DIRECTION_DOWN);
 
-	multiswitch2.channel[0] = getChannel2Poti(0, 90);
-	multiswitch2.channel[1] = getChannel2Poti(1, 90);
-	multiswitch2.channel[2] = getChannel2Switch(0, DIRECTION_MID);
-	multiswitch2.channel[3] = getChannel2Switch(1, DIRECTION_MID);
-	multiswitch2.channel[4] = getChannel2Switch(2, DIRECTION_MID);
-	multiswitch2.channel[5] = getChannel2Switch(3, DIRECTION_MID);
-	multiswitch2.channel[6] = getChannel2Switch(4, DIRECTION_MID);
-	multiswitch2.channel[7] = getChannel2Switch(5, DIRECTION_MID);
+	multiswitch2.channel[0] = getChannel2Poti(0, 1520);
+	multiswitch2.channel[1] = getChannel2Switch(1, DIRECTION_MID);
+	multiswitch2.channel[2] = getChannel2Switch(2, DIRECTION_MID);
+	multiswitch2.channel[3] = getChannel2Switch(3, DIRECTION_MID);
+	multiswitch2.channel[4] = getChannel2Switch(4, DIRECTION_MID);
+	multiswitch2.channel[5] = getChannel2Switch(5, DIRECTION_MID);
+	multiswitch2.channel[6] = getChannel2Switch(6, DIRECTION_MID);
+	multiswitch2.channel[7] = getChannel2Switch(7, DIRECTION_MID);
 
 	channel3Switch = getChannel3Signal();
 
@@ -406,8 +406,10 @@ void loop() {                             // put your main code here, to run rep
 		truckSerial.setAdditionalData(AdditionalDataIdentifier::LEFT_TURN_INDICATOR, leftIndicatorLight.state);
 		truckSerial.setAdditionalData(AdditionalDataIdentifier::RIGHT_TURN_INDICATOR, rightIndicatorLight.state);
 		truckSerial.setAdditionalData(AdditionalDataIdentifier::HAZARD_STATE, hazardLight.state);
+		truckSerial.setAdditionalData(AdditionalDataIdentifier::SERVO_POSITION_DOWN, multiswitch2.channel[1] == DIRECTION_DOWN);
+		truckSerial.setAdditionalData(AdditionalDataIdentifier::SERVO_POSITION_UP, multiswitch2.channel[1] == DIRECTION_UP);
 		truckSerial.setServoData(ServoDataIdentifier::SERVO_CHANNEL_1, multiswitch2.channel[0]);
-		truckSerial.setServoData(ServoDataIdentifier::SERVO_CHANNEL_2, multiswitch2.channel[1]);
+		//truckSerial.setServoData(ServoDataIdentifier::SERVO_CHANNEL_2, multiswitch2.channel[1]);
 		truckSerial.update();
 	}
 
