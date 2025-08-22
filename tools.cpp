@@ -26,6 +26,11 @@ bool EdgeEvaluation::readEdge(bool input){
 	return false;
 }
 
+void Filter::init(int16_t initialValue) {
+	lastValue = initialValue;
+	doneFilter = false;
+}
+
 int16_t Filter::filterValue(int16_t input, int16_t filterFactor, uint16_t filterTime){
 	if((millis()%filterTime >= filterTime/2) && (doneFilter == false)) {
 		lastValue = (input - lastValue) / filterFactor + lastValue; 
@@ -53,37 +58,3 @@ uint8_t Blink::blink(uint16_t blinkTimeMillis) {
 void Blink::resetBlink() {
 	blinkOnTime = 0;
 }
-
-/*
-void outputDefine::outputMode(int outPin, unsigned char modus){
-	pinMode(outPin, OUTPUT);
-	outPinModus = modus;
-	switch (modus) {
-		case OUT_HARD_PWM:
-		analogWrite(outPin, 0);
-		break;
-		case OUT_SOFT_PWM:
-		SoftPWMSet(outPin, 0);
-		break;
-		case OUT_DIGITAL:
-		//nothing to do
-		break;
-		default:
-		//error
-		break;		
-	}
-}
-void outputDefine::outputMode(int outPin, unsigned char modus, int fadeUpTime, int fadeDownTime){
-	pinMode(outPin, OUTPUT);
-	outPinModus = modus;
-	switch (modus) {
-		case OUT_SOFT_FADE:
-		SoftPWMSet(outPin, 0);     									//Create and set pin to 0
-		SoftPWMSetFadeTime(outPin, fadeUpTime, fadeDownTime);       //Set fade time for pin 1000 ms fade-up time, and 1000 ms fade-down time
-		break;
-		default:
-		//error
-		break;		
-	}
-}
-*/

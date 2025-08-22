@@ -17,180 +17,151 @@
  ************************************/
 #include "serialCommMaster.h"
 
-
-#define BUFFER_SIZE 64
-#define MIN_BUFFER_SIZE 4
-#define BUFFER_EMPTY 0
-#define BROADCAST_ADDRESS 0
-#define FUNC_LIGHT_DATA 1
-#define FUNC_LIGHT_SERVO 2
-
-// For CRC calculation
-#define BIT_COUNT 8
-#define POLYNOMIAL 0xA001
-
-uint8_t frame[BUFFER_SIZE];
-uint8_t TxEnablePin;
-uint16_t errorCount;
-HardwareSerial* SerialPort;
-
-// state machine states
-#define IDLE 1
-#define WAITING_FOR_TURNAROUND 2
-#define BUFFER_SIZE 64
-
-#define FUNC_LIGHT_DATA 1
-#define FUNC_SERVO 2
-
-uint8_t state = 2;
-uint8_t protocolversion = 1; // Default protocol version
-uint32_t timeout; // timeout interval
-uint32_t polling; // turnaround delay interval
-uint16_t frameDelay = 10; // frame time out in microseconds
-uint32_t delayStart; // init variable for turnaround and timeout delay
-
-uint8_t lightDataFromSerial;
-uint8_t additionalDataFromSerial;
-uint16_t servoMicrosFromSerial[2];
-
-void serialConfigure(HardwareSerial *_SerialPort,	// Serial interface on arduino
-					uint32_t baud,						// Baudrate
-					uint8_t byteFormat,		// e.g. SERIAL_8N1 | start bit, data bit, stop bit
-					long _timeout, 
-					long _polling, 
-					uint8_t _TxEnablePin,		// Pin to switch between Transmit and Receive
-					uint8_t _protocolVersion
+void SerialCommMaster::begin(
+	HardwareSerial* serialPort,
+	uint32_t baud,
+	uint8_t byteFormat,
+	long timeout,
+	long polling,
+	uint8_t txEnablePin,
+	uint8_t protocolVersion
 ) {
-	SerialPort = _SerialPort;						// Store on a global var
-	(*SerialPort).begin(baud, byteFormat);			// Init communication port
-	timeout = _timeout;
-	polling = _polling;
-	TxEnablePin = _TxEnablePin;						// Store on a global var for other functions
-	pinMode(TxEnablePin, OUTPUT);
-	digitalWrite(TxEnablePin, LOW);					// Set to low at start to receive data
-	protocolversion = _protocolVersion;				// Set protocol version
-	errorCount = 0; 								// Initialize errorCount
-} 
+	_serialPort = serialPort;
+	_timeout = timeout;
+	_polling = polling;
+	_txEnablePin = txEnablePin;
+	_protocolVersion = protocolVersion;
 
-uint16_t serialUpdate() {
-	switch (state) {
+	(*_serialPort).begin(baud, byteFormat);
+	pinMode(_txEnablePin, OUTPUT);
+	digitalWrite(_txEnablePin, LOW);
+
+	_errorCount = 0;
+	_state = WAITING_FOR_TURNAROUND;
+	_frameDelay = 10;
+	_delayStart = 0;
+	_lightDataFromSerial = 0;
+	_additionalDataFromSerial = 0;
+	_servoMicrosFromSerial[0] = 0;
+	_servoMicrosFromSerial[1] = 0;
+}
+
+uint16_t SerialCommMaster::update() {
+	switch (_state) {
 		case IDLE:
 			idle();
-		break;
+			break;
 		case WAITING_FOR_TURNAROUND:
 			waitingForTurnaround();
-		break;
+			break;
 	}
-	return errorCount;
+	return _errorCount;
 }
 
-
-void idle() {
-	switch (protocolversion) {
+void SerialCommMaster::idle() {
+	switch (_protocolVersion) {
 		case FUNC_LIGHT_DATA:
-			constructPacket(FUNC_LIGHT_DATA, lightDataFromSerial);
-		break;
+			constructPacket(FUNC_LIGHT_DATA, _lightDataFromSerial);
+			break;
 		case FUNC_LIGHT_SERVO:
-			constructPacket(FUNC_LIGHT_SERVO, lightDataFromSerial, additionalDataFromSerial, servoMicrosFromSerial[0], servoMicrosFromSerial[1]);
-		break;
+			constructPacket(FUNC_LIGHT_SERVO, _lightDataFromSerial, _additionalDataFromSerial, _servoMicrosFromSerial[0],
+							_servoMicrosFromSerial[1]);
+			break;
 	}
 }
 
-void constructPacket(uint8_t function, uint16_t lightData, uint16_t additionalData, uint16_t servoData1, uint16_t ServoData2) {
-
-	frame[0] = function;
+void SerialCommMaster::constructPacket(
+	uint8_t function,
+	uint16_t lightData,
+	uint16_t additionalData,
+	uint16_t servoData1,
+	uint16_t servoData2
+) {
+	_frame[0] = function;
 	uint8_t frameSize;
 	switch (function) {
 		case FUNC_LIGHT_DATA:
 			frameSize = 4; // 1 byte function + 1 byte lightData + 2 bytes CRC
-			frame[1] = lightData & 0x00FF;
+			_frame[1] = lightData & 0x00FF;
 			break;
 		case FUNC_LIGHT_SERVO:
-			frameSize = 9; // 1 byte function + 1 byte lightData + 1 byte additionalData + 2 bytes servo1 + 2 bytes servo2 + 2 bytes CRC
-			frame[1] = lightData & 0x00FF;
-			frame[2] = additionalData & 0x00FF;
-			frame[3] = servoData1 >> 8;
-			frame[4] = servoData1 & 0xFF;
-			frame[5] = ServoData2 >> 8;
-			frame[6] = ServoData2 & 0xFF;
+			frameSize = 9; // 1 byte function + 1 byte lightData + 1 byte additionalData + 2 bytes servo1 + 2 bytes
+						   // servo2 + 2 bytes CRC
+			_frame[1] = lightData & 0x00FF;
+			_frame[2] = additionalData & 0x00FF;
+			_frame[3] = servoData1 >> 8;
+			_frame[4] = servoData1 & 0xFF;
+			_frame[5] = servoData2 >> 8;
+			_frame[6] = servoData2 & 0xFF;
 			break;
 		default:
 			return; // Invalid function, do not send anything
 	}
 
-	uint16_t crc16 = calculateCRC(frameSize -2);
-	frame[frameSize - 2] = crc16 >> 8; // Split crc into two bytes
-	frame[frameSize - 1] = crc16 & 0xFF;
+	uint16_t crc16 = calculateCRC(frameSize - 2);
+	_frame[frameSize - 2] = crc16 >> 8; // Split crc into two bytes
+	_frame[frameSize - 1] = crc16 & 0xFF;
 
 	sendPacket(frameSize);
-	state = WAITING_FOR_TURNAROUND;
+	_state = WAITING_FOR_TURNAROUND;
 }
 
-void waitingForTurnaround() {
-	if ((millis() - delayStart) > polling) state = IDLE;
+void SerialCommMaster::waitingForTurnaround() {
+	if ((millis() - _delayStart) > _polling)
+		_state = IDLE;
 }
 
-uint16_t calculateCRC(uint8_t bufferSize) {
-	uint16_t crc16 = 0xFFFF;														// Load a 16–bit register with FFFF hex (all 1’s)
+uint16_t SerialCommMaster::calculateCRC(uint8_t bufferSize) {
+	uint16_t crc16 = 0xFFFF; // Load a 16–bit register with FFFF hex (all 1’s)
 	for (uint8_t bufferPosition = 0; bufferPosition < bufferSize; bufferPosition++) {
-		crc16 = crc16 ^ frame[bufferPosition];										// XOR byte into least significant byte of crc
-		for (uint8_t bitPosition = 1; bitPosition <= BIT_COUNT; bitPosition++) {	// Loop over each bit
-			if(crc16 & 0x0001) {													// If the LSB is set
-				crc16 >>= 1;														// Shift right and XOR with polynomial 
+		crc16 = crc16 ^ _frame[bufferPosition]; // XOR byte into least significant byte of crc
+		for (uint8_t bitPosition = 1; bitPosition <= BIT_COUNT; bitPosition++) { // Loop over each bit
+			if (crc16 & 0x0001) { // If the LSB is set
+				crc16 >>= 1; // Shift right and XOR with polynomial
 				crc16 ^= POLYNOMIAL;
-			} else {																// Shift only to the right if LSB is not set
+			} else { // Shift only to the right if LSB is not set
 				crc16 >>= 1;
 			}
 		}
 	}
-	return crc16; 																	// The final content of the CRC register is the CRC value
+	return crc16; // The final content of the CRC register is the CRC value
 }
 
-void sendPacket(unsigned char bufferSize) {
-	digitalWrite(TxEnablePin, HIGH);
-		
+void SerialCommMaster::sendPacket(uint8_t bufferSize) {
+	digitalWrite(_txEnablePin, HIGH);
+
 	for (unsigned char i = 0; i < bufferSize; i++) {
-		(*SerialPort).write(frame[i]);
+		(*_serialPort).write(_frame[i]);
 	}
-	(*SerialPort).flush();
-	
-	delayMicroseconds(frameDelay);
-	
-	digitalWrite(TxEnablePin, LOW);
-		
-	delayStart = millis(); // start the timeout delay	
+	(*_serialPort).flush();
+
+	delayMicroseconds(_frameDelay);
+
+	digitalWrite(_txEnablePin, LOW);
+
+	_delayStart = millis(); // start the timeout delay
 }
 
-	// Function 1 is Light information lightData which has only one byte
-	/* 	0 -> parking light,
-		1 -> brake light,
-		2 -> reversing lights,
-		3 -> right blinker,
-		4 -> left blinker,
-		5 -> auxiliary light,
-		6 -> beacon light
-		7 -> dimm light
-	*/
-void setLightData(uint8_t lightOption, bool lightState) {
-	if(lightState) {
+void SerialCommMaster::setLightData(LightIdentifier lightOption, bool lightState) {
+	if (lightState) {
 		uint8_t bitmask = 0x1 << lightOption;
-		lightDataFromSerial |= bitmask;
+		_lightDataFromSerial |= bitmask;
 	} else {
 		uint8_t bitmask = ~(0x1 << lightOption);
-		lightDataFromSerial &= bitmask;
+		_lightDataFromSerial &= bitmask;
 	}
 }
 
-void setAdditionalData(uint8_t additionalOption, bool additionalState) {
-	if(additionalState) {
+void SerialCommMaster::setAdditionalData(AdditionalDataIdentifier additionalOption, bool additionalState) {
+	if (additionalState) {
 		uint8_t bitmask = 0x1 << additionalOption;
-		additionalDataFromSerial |= bitmask;
+		_additionalDataFromSerial |= bitmask;
 	} else {
 		uint8_t bitmask = ~(0x1 << additionalOption);
-		additionalDataFromSerial &= bitmask;
+		_additionalDataFromSerial &= bitmask;
 	}
 }
 
-void setServoData(uint8_t servoOption, uint16_t servoValue) {
-	servoMicrosFromSerial[servoOption] = servoValue;
+void SerialCommMaster::setServoData(ServoDataIdentifier servoOption, uint16_t servoValue) {
+	_servoMicrosFromSerial[servoOption] = servoValue;
 }

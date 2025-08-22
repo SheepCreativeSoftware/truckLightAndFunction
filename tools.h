@@ -31,6 +31,7 @@ class Filter {
 		int16_t lastValue;
 		bool doneFilter;
     public:
+		void init(int16_t initialValue);
 		int16_t filterValue(int16_t input, int16_t filterFactor = 20, uint16_t filterTime = 100);
 };
 
@@ -41,16 +42,5 @@ class Blink {
 		uint8_t blink(uint16_t blinkTimeMillis);
 		void resetBlink(); // Reset Blink after usage for next usage
 };
-
-/*
-class outputDefine {
-		unsigned int outPinModus;
-    public:
-		
-		void outputMode(int outPin, unsigned char modus);
-		void outputMode(int outPin, unsigned char modus, int fadeUpTime, int fadeDownTime);		
-};
-//Modus pwmHW softPWM softFade digital
-*/
 
 #endif

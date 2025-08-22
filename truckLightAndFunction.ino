@@ -57,6 +57,7 @@ Lights auxLight;
 Lights brakeLight;
 Lights reverseLight;
 
+SerialCommMaster truckSerial;
 StarterAdjustedBrightness brightnessAdjust;
 
 uint8_t channel3Switch = 0;
@@ -172,7 +173,7 @@ void setup() {
 	}
 
 	if (vehicleConfig.serialConfig.isEnabled) {
-		serialConfigure(&SerialHW,			// Serial interface on arduino
+		truckSerial.begin(&SerialHW,			// Serial interface on arduino
 					vehicleConfig.serialConfig.baudRate,
 					vehicleConfig.serialConfig.byteFormat,
 					vehicleConfig.serialConfig.timeout,
@@ -394,20 +395,20 @@ void loop() {                             // put your main code here, to run rep
 		/*
 		* Setup serial communication
 		*/
-		setLightData(LightIdentifier::PARK_LIGHT, parkLight.out);
-		setLightData(LightIdentifier::BRAKE_LIGHT, brakeLight.out);
-		setLightData(LightIdentifier::REVERSE_LIGHT, reverseLight.out);
-		setLightData(LightIdentifier::RIGHT_BLINK, rightIndicatorLight.out);
-		setLightData(LightIdentifier::LEFT_BLINK, leftIndicatorLight.out);
-		setLightData(LightIdentifier::AUX_LIGHT, auxLight.out);
-		setLightData(LightIdentifier::BEACON_LIGHT, beaconLight.out);
-		setLightData(LightIdentifier::DIMM_LIGHTS, isStarterActive);
-		setAdditionalData(0, leftIndicatorLight.state);
-		setAdditionalData(1, rightIndicatorLight.state);
-		setAdditionalData(2, hazardLight.state);
-		setServoData(0, multiswitch2.channel[0]);
-		setServoData(1, multiswitch2.channel[1]);
-		serialUpdate();
+		truckSerial.setLightData(LightIdentifier::PARK_LIGHT, parkLight.out);
+		truckSerial.setLightData(LightIdentifier::BRAKE_LIGHT, brakeLight.out);
+		truckSerial.setLightData(LightIdentifier::REVERSE_LIGHT, reverseLight.out);
+		truckSerial.setLightData(LightIdentifier::RIGHT_BLINK, rightIndicatorLight.out);
+		truckSerial.setLightData(LightIdentifier::LEFT_BLINK, leftIndicatorLight.out);
+		truckSerial.setLightData(LightIdentifier::AUX_LIGHT, auxLight.out);
+		truckSerial.setLightData(LightIdentifier::BEACON_LIGHT, beaconLight.out);
+		truckSerial.setLightData(LightIdentifier::DIMM_LIGHTS, isStarterActive);
+		truckSerial.setAdditionalData(AdditionalDataIdentifier::LEFT_TURN_INDICATOR, leftIndicatorLight.state);
+		truckSerial.setAdditionalData(AdditionalDataIdentifier::RIGHT_TURN_INDICATOR, rightIndicatorLight.state);
+		truckSerial.setAdditionalData(AdditionalDataIdentifier::HAZARD_STATE, hazardLight.state);
+		truckSerial.setServoData(ServoDataIdentifier::SERVO_CHANNEL_1, multiswitch2.channel[0]);
+		truckSerial.setServoData(ServoDataIdentifier::SERVO_CHANNEL_2, multiswitch2.channel[1]);
+		truckSerial.update();
 	}
 
 	/*

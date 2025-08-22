@@ -55,6 +55,8 @@ void initInterrupts(uint8_t pinPPMChannel1, uint8_t pinPPMChannel2, uint8_t pinS
 	attachInterrupt(digitalPinToInterrupt(pinPPMChannel1), ppmMultiInterrupt1, CHANGE); 	//Setup Interrupt
 	attachInterrupt(digitalPinToInterrupt(pinPPMChannel2), ppmMultiInterrupt2, CHANGE);		//Setup Interrupt
 	attachInterrupt(digitalPinToInterrupt(pinServoChannel), ppmServoInterrupt, CHANGE);		//Setup Interrupt
+	filter[0].init(1520);
+	filter[1].init(1520);
 }
 
 void ppmMultiInterrupt1(){
@@ -138,13 +140,17 @@ uint8_t getChannel1Switch(uint8_t channel, uint8_t fallbackValue) {
 }
 
 uint16_t getChannel2Poti(uint8_t channel, uint16_t fallbackValue) {
-	if(!checkChannelStatus(MULTI1)) return fallbackValue;				// return fallback if channel does not respond
+	uint16_t actualValue = fallbackValue;
 	switch (channel) {
 	case 0:
-		return ppmServoToRange(filter[0].filterValue(interrupt[MULTI2].buffer[0], 10, 50));
+		if (checkChannelStatus(MULTI2)) actualValue = interrupt[MULTI2].buffer[0];
+	
+		return ppmServoToRange(filter[0].filterValue(actualValue, 10, 20));
 		break;
 	case 1:
-		return ppmServoToRange(filter[1].filterValue(interrupt[MULTI2].buffer[1], 10, 50));
+		if (checkChannelStatus(MULTI2)) actualValue = interrupt[MULTI2].buffer[1];
+
+		return ppmServoToRange(filter[1].filterValue(actualValue, 10, 20));
 		break;
 	}
 	// If something wrong return fallback

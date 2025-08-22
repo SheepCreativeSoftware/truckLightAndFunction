@@ -16,8 +16,8 @@
  * If not, see <https://www.gnu.org/licenses/>.
  ************************************/
 
-#ifndef _SERIAL_COMM_SLAVE_H_
-#define _SERIAL_COMM_SLAVE_H_
+#ifndef _SERIAL_COMM_MASTER_H_
+#define _SERIAL_COMM_MASTER_H_
 
 #include "Arduino.h"
 #include "HardwareSerial.h"
@@ -33,32 +33,69 @@ enum LightIdentifier {
 	DIMM_LIGHTS = 7
 };
 
-#define PARKLIGHT 0
-#define BRAKELIGHT 1
-#define REVERSELIGHT 2
-#define RIGHTBLINK 3
-#define LEFTBLINK 4
-#define AUXLIGHT 5
-#define BEACONLIGHT 6
-#define DIMMLIGHTS 7
+enum AdditionalDataIdentifier {
+	LEFT_TURN_INDICATOR = 0,
+	RIGHT_TURN_INDICATOR = 1,
+	HAZARD_STATE = 2
+};
 
-void serialConfigure(HardwareSerial *_SerialPort,	// Serial interface on arduino
-					uint32_t baud,						// Baudrate
-					uint8_t byteFormat,		// e.g. SERIAL_8N1 | start bit, data bit, stop bit
-					long _timeout, 
-					long _polling, 
-					uint8_t _TxEnablePin,		// Pin to switch between Transmit and Receive
-					uint8_t protocolVersion = 1	// Protocol version to use
-) ;
+enum ServoDataIdentifier {
+	SERVO_CHANNEL_1 = 0,
+	SERVO_CHANNEL_2 = 1
+};
 
-uint16_t serialUpdate();
-void idle();
-void waitingForTurnaround();
-void constructPacket(uint8_t function, uint16_t lightData, uint16_t additionalData = 0, uint16_t servoData1 = 0, uint16_t ServoData2 = 0);
-uint16_t calculateCRC(uint8_t bufferSize);
-void sendPacket(unsigned char bufferSize);
-void setLightData(uint8_t lightOption, bool lightState);
-void setAdditionalData(uint8_t additionalOption, bool additionalState);
-void setServoData(uint8_t servoOption, uint16_t servoValue);
+class SerialCommMaster {
+public:
+	void begin(HardwareSerial* serialPort, uint32_t baud, uint8_t byteFormat, long timeout, long polling,
+			   uint8_t txEnablePin, uint8_t protocolVersion = 1);
+
+	uint16_t update();
+	void setLightData(LightIdentifier lightOption, bool lightState);
+	void setAdditionalData(AdditionalDataIdentifier additionalOption, bool additionalState);
+	void setServoData(ServoDataIdentifier servoOption, uint16_t servoValue);
+
+private:
+	// Constants
+	static constexpr uint8_t BUFFER_SIZE = 64;
+	static constexpr uint8_t MIN_BUFFER_SIZE = 4;
+	static constexpr uint8_t BUFFER_EMPTY = 0;
+	static constexpr uint8_t BROADCAST_ADDRESS = 0;
+	static constexpr uint8_t FUNC_LIGHT_DATA = 1;
+	static constexpr uint8_t FUNC_LIGHT_SERVO = 2;
+	static constexpr uint8_t BIT_COUNT = 8;
+	static constexpr uint16_t POLYNOMIAL = 0xA001;
+
+	// State machine states
+	enum State { IDLE, WAITING_FOR_TURNAROUND };
+
+	// Member variables
+	HardwareSerial* _serialPort;
+	uint8_t _txEnablePin;
+	uint16_t _errorCount;
+	uint8_t _protocolVersion;
+	uint32_t _timeout;
+	uint32_t _polling;
+	uint16_t _frameDelay;
+	uint32_t _delayStart;
+
+	uint8_t _frame[BUFFER_SIZE];
+	State _state;
+
+	uint8_t _lightDataFromSerial;
+	uint8_t _additionalDataFromSerial;
+	uint16_t _servoMicrosFromSerial[2];
+
+	// Private methods
+	void idle();
+	void waitingForTurnaround();
+	void constructPacket(
+		uint8_t function,
+		uint16_t lightData,
+		uint16_t additionalData = 0,
+		uint16_t servoData1 = 0,
+		uint16_t servoData2 = 0);
+	uint16_t calculateCRC(uint8_t bufferSize);
+	void sendPacket(uint8_t bufferSize);
+};
 
 #endif
